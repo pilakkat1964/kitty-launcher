@@ -37,7 +37,7 @@ sudo cp target/release/kitty-launcher /usr/local/bin/
 kitty-launcher -c dev
 
 # Edit it to customize
-$EDITOR ~/.local/etc/kitty/dev.session
+$EDITOR ~/.local/etc/kitty/sessions/dev.session
 
 # Launch it anytime
 kitty-launcher dev
@@ -216,7 +216,7 @@ kitty-launcher -l "📊 Monitor" monitoring
 
 # Add to version control for team
 # .local/share/applications/kitty-launcher-*.desktop
-# .local/etc/kitty/*.session
+# .local/etc/kitty/sessions/*.session
 ```
 
 **Team Benefit**: New developers clone repo → run scripts to create launchers → have same environment as team lead. Zero setup friction.
@@ -430,7 +430,7 @@ kitty-launcher -V
 ```bash
 # Create session with specific configuration
 kitty-launcher -c work-server
-$EDITOR ~/.local/etc/kitty/work-server.session
+$EDITOR ~/.local/etc/kitty/sessions/work-server.session
 
 # Create multiple launchers from same session
 kitty-launcher -l "Primary" work-server
@@ -446,7 +446,7 @@ fi
 
 ### Session Configuration
 
-Sessions are stored in: `~/.local/etc/kitty/`
+Sessions are stored in: `~/.local/etc/kitty/sessions/`
 
 Example session file (`dev.session`):
 

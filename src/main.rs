@@ -13,10 +13,10 @@
 //!
 //! ## Configuration Search Path
 //! The program searches for session configuration files in this order:
-//! 1. `./etc/kitty` (current directory)
-//! 2. `~/.local/etc/kitty` (user home directory)
-//! 3. `/opt/etc/kitty` (optional system-wide)
-//! 4. `~/.config/kitty` (kitty standard location)
+//! 1. `./etc/kitty/sessions` (current directory)
+//! 2. `~/.local/etc/kitty/sessions` (user home directory)
+//! 3. `/opt/etc/kitty/sessions` (optional system-wide)
+//! 4. `~/.config/kitty/sessions` (kitty standard location)
 //!
 //! ## Usage
 //! ```
@@ -93,10 +93,10 @@ fn print_help() {
     println!("      zsh:   kitty-launcher --generate-completions zsh >> ~/.zshrc");
     println!();
     println!("SESSION SEARCH PATHS (in order of priority):");
-    println!("    1. ./etc/kitty/");
-    println!("    2. ~/.local/etc/kitty/");
-    println!("    3. /opt/etc/kitty/");
-    println!("    4. ~/.config/kitty/");
+    println!("    1. ./etc/kitty/sessions/");
+    println!("    2. ~/.local/etc/kitty/sessions/");
+    println!("    3. /opt/etc/kitty/sessions/");
+    println!("    4. ~/.config/kitty/sessions/");
     println!();
     println!("SESSION FILE DISCOVERY:");
     println!("    - Searches for <NAME> first");
@@ -104,8 +104,8 @@ fn print_help() {
     println!("    - Session names must be alphanumeric with hyphens, underscores, or dots");
     println!();
     println!("CREATING NEW SESSIONS:");
-    println!("    - Uses z-tools.session as template from ~/.local/etc/kitty/");
-    println!("    - Creates file as ~/.local/etc/kitty/<NAME>.session");
+    println!("    - Uses z-tools.session as template from ~/.local/etc/kitty/sessions/");
+    println!("    - Creates file as ~/.local/etc/kitty/sessions/<NAME>.session");
     println!("    - Edit the created file to customize your session");
     println!();
     println!("CREATING LAUNCHER FILES:");
@@ -182,10 +182,10 @@ fn get_home_dir() -> Option<PathBuf> {
 ///
 /// This function searches for the session configuration file in the standard
 /// locations in the following order:
-/// 1. `./etc/kitty/` (current directory)
-/// 2. `~/.local/etc/kitty/` (user home directory)
-/// 3. `/opt/etc/kitty/` (optional system-wide)
-/// 4. `~/.config/kitty/` (kitty standard location)
+/// 1. `./etc/kitty/sessions/` (current directory)
+/// 2. `~/.local/etc/kitty/sessions/` (user home directory)
+/// 3. `/opt/etc/kitty/sessions/` (optional system-wide)
+/// 4. `~/.config/kitty/sessions/` (kitty standard location)
 ///
 /// If the session name doesn't already end with `.session`, the function will
 /// first try to find the file as-is, then retry with `.session` extension appended.
@@ -201,22 +201,24 @@ fn get_home_dir() -> Option<PathBuf> {
 /// * `Err(String)` - An error message listing all attempted paths
 fn find_config_file(session_name: &str) -> Result<PathBuf, String> {
     // Define the search paths in order of preference
+    // Sessions are stored in a dedicated ./sessions subfolder to avoid
+    // conflicts with kitty's own configuration files
     let mut search_paths: Vec<PathBuf> = vec![
         // Current directory (highest priority)
-        PathBuf::from("./etc/kitty"),
+        PathBuf::from("./etc/kitty/sessions"),
     ];
 
     // Add user's local configuration directory if home dir is available
     if let Some(home) = get_home_dir() {
-        search_paths.push(home.join(".local/etc/kitty"));
+        search_paths.push(home.join(".local/etc/kitty/sessions"));
     }
 
     // Add optional system-wide directory
-    search_paths.push(PathBuf::from("/opt/etc/kitty"));
+    search_paths.push(PathBuf::from("/opt/etc/kitty/sessions"));
 
     // Add kitty's standard configuration directory if home dir is available
     if let Some(home) = get_home_dir() {
-        search_paths.push(home.join(".config/kitty"));
+        search_paths.push(home.join(".config/kitty/sessions"));
     }
 
     // Build list of session names to try: first the original, then with .session extension
@@ -279,7 +281,7 @@ fn find_config_file(session_name: &str) -> Result<PathBuf, String> {
 ///
 /// This function:
 /// 1. Validates the session name
-/// 2. Finds or creates the ~/.local/etc/kitty directory
+/// 2. Finds or creates the ~/.local/etc/kitty/sessions directory
 /// 3. Reads the template file (z-tools.session)
 /// 4. Creates a new session file with the provided name
 ///
@@ -296,8 +298,8 @@ fn create_session_file(name: &str) -> Result<PathBuf, String> {
     // Get home directory
     let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
 
-    // Define the session directory
-    let session_dir = home.join(".local/etc/kitty");
+    // Define the session directory (with sessions subfolder for isolation)
+    let session_dir = home.join(".local/etc/kitty/sessions");
 
     // Create the directory if it doesn't exist
     fs::create_dir_all(&session_dir).map_err(|e| {
@@ -524,10 +526,10 @@ _kitty_launcher_complete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    # Get list of available sessions
+     # Get list of available sessions
     local sessions=""
-    if [[ -d "$HOME/.local/etc/kitty" ]]; then
-        sessions=$(ls -1 "$HOME/.local/etc/kitty" 2>/dev/null | sed 's/\.session$//' | sort -u)
+    if [[ -d "$HOME/.local/etc/kitty/sessions" ]]; then
+        sessions=$(ls -1 "$HOME/.local/etc/kitty/sessions" 2>/dev/null | sed 's/\.session$//' | sort -u)
     fi
     
     # Handle options and commands
@@ -560,10 +562,10 @@ fn generate_zsh_completion() {
 _kitty_launcher() {
     local -a commands
     local -a sessions
-    
+     
     # Get list of available sessions
-    if [[ -d "$HOME/.local/etc/kitty" ]]; then
-        sessions=(${(f)"$(ls -1 "$HOME/.local/etc/kitty" 2>/dev/null | sed 's/\.session$//')"})
+    if [[ -d "$HOME/.local/etc/kitty/sessions" ]]; then
+        sessions=(${(f)"$(ls -1 "$HOME/.local/etc/kitty/sessions" 2>/dev/null | sed 's/\.session$//')"})
     fi
     
     commands=(

@@ -57,11 +57,11 @@ Commands
      Launch a kitty session using the specified session name. The program
      will search for the session configuration file in multiple standard
      locations.
-
- -c, --create <NAME>
-     Create a new session configuration file. Creates a file named
-     <NAME>.session in ~/.local/etc/kitty/ using z-tools.session as a
-     template (if available).
+ 
+  -c, --create <NAME>
+      Create a new session configuration file. Creates a file named
+      <NAME>.session in ~/.local/etc/kitty/sessions/ using z-tools.session as a
+      template (if available).
 
  -l, --create-launcher <LAUNCHER_NAME> [SESSION_NAME]
      Create a .desktop launcher file for launching a session from application
@@ -115,10 +115,10 @@ Search Paths
 
 The program searches for session configuration files in this order:
 
-  1. ./etc/kitty/                  (current directory, highest priority)
-  2. ~/.local/etc/kitty/           (user home directory)
-  3. /opt/etc/kitty/               (optional system-wide)
-  4. ~/.config/kitty/              (kitty standard location, lowest priority)
+  1. ./etc/kitty/sessions/             (current directory, highest priority)
+  2. ~/.local/etc/kitty/sessions/      (user home directory)
+  3. /opt/etc/kitty/sessions/          (optional system-wide)
+  4. ~/.config/kitty/sessions/         (kitty standard location, lowest priority)
 
 
 Extension Auto-appending
@@ -161,7 +161,7 @@ To create a new session configuration file:
 
 This command will:
 
-  1. Create the ~/.local/etc/kitty/ directory if it doesn't exist
+  1. Create the ~/.local/etc/kitty/sessions/ directory if it doesn't exist
   2. Copy the z-tools.session template (if available)
   3. Create a new file named <SESSION_NAME>.session
   4. Display the path to the created file
@@ -172,7 +172,7 @@ Template Files
 
 The --create command uses z-tools.session as a template. To customize:
 
-  1. Edit ~/.local/etc/kitty/z-tools.session
+  1. Edit ~/.local/etc/kitty/sessions/z-tools.session
   2. Run kitty-launcher --create with your desired name
   3. The new session will be created from your customized template
 
@@ -192,7 +192,7 @@ Editing Sessions
 
 After creating a session file, you can edit it directly:
 
-   $EDITOR ~/.local/etc/kitty/<SESSION_NAME>.session
+   $EDITOR ~/.local/etc/kitty/sessions/<SESSION_NAME>.session
 
 For session file format documentation, see:
 https://sw.kovidgoyal.net/kitty/conf/
@@ -293,10 +293,10 @@ Short form:
    kitty-launcher -c my-project
 
 Long form:
-   kitty-launcher --create my-project
+    kitty-launcher --create my-project
 
 Creates a new session file at:
-   ~/.local/etc/kitty/my-project.session
+    ~/.local/etc/kitty/sessions/my-project.session
 
 
 Create a Launcher
@@ -354,10 +354,10 @@ Configuration File Locations
 
 Session configuration files are stored in these locations:
 
-  1. ./etc/kitty/                (project-local sessions)
-  2. ~/.local/etc/kitty/         (user sessions, created by --create)
-  3. /opt/etc/kitty/             (system-wide sessions)
-  4. ~/.config/kitty/            (kitty standard location)
+  1. ./etc/kitty/sessions/           (project-local sessions)
+  2. ~/.local/etc/kitty/sessions/    (user sessions, created by --create)
+  3. /opt/etc/kitty/sessions/        (system-wide sessions)
+  4. ~/.config/kitty/sessions/       (kitty standard location)
 
 
 Session File Format
@@ -529,7 +529,7 @@ Limited Template Customization
 
 The --create command only supports z-tools.session as a template.
 
-   Workaround: Edit ~/.local/etc/kitty/z-tools.session to customize
+   Workaround: Edit ~/.local/etc/kitty/sessions/z-tools.session to customize
    the default template, then create new sessions.
 
 

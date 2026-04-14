@@ -29,13 +29,13 @@ Launch a kitty session using the specified session name. The program searches fo
 configuration files in the following order:
 .RS
 .IP 1. 3
-./etc/kitty/ (current directory, highest priority)
+./etc/kitty/sessions/ (current directory, highest priority)
 .IP 2. 3
-~/.local/etc/kitty/ (user home directory)
+~/.local/etc/kitty/sessions/ (user home directory)
 .IP 3. 3
-/opt/etc/kitty/ (optional system-wide)
+/opt/etc/kitty/sessions/ (optional system-wide)
 .IP 4. 3
-~/.config/kitty/ (kitty standard location, lowest priority)
+~/.config/kitty/sessions/ (kitty standard location, lowest priority)
 .RE
 
 If the session name doesn't already end with
@@ -49,11 +49,11 @@ extension appended.
 Create a new session configuration file. The program will:
 .RS
 .IP 1. 3
-Create the ~/.local/etc/kitty/ directory if it doesn't exist
+Create the ~/.local/etc/kitty/sessions/ directory if it doesn't exist
 .IP 2. 3
 Copy the z-tools.session template file (if it exists)
 .IP 3. 3
-Create a new file named <NAME>.session in ~/.local/etc/kitty/
+Create a new file named <NAME>.session in ~/.local/etc/kitty/sessions/
 .RE
 
 If no template file is available, a basic template will be created. The created
@@ -148,12 +148,12 @@ new_tab Development
 When creating a new session with
 .B \-\-create
 option, the program uses z-tools.session as a template. This template should be
-located at ~/.local/etc/kitty/z-tools.session. If no template exists, a basic
+located at ~/.local/etc/kitty/sessions/z-tools.session. If no template exists, a basic
 template will be used.
 
 To customize the template:
 .IP 1. 3
-Edit ~/.local/etc/kitty/z-tools.session
+Edit ~/.local/etc/kitty/sessions/z-tools.session
 .IP 2. 3
 Run
 .B kitty-launcher \-\-create <name>
@@ -278,11 +278,11 @@ locate its configuration.
 Current directory session configurations (highest priority)
 
 .TP
-.B ~/.local/etc/kitty/
+.B ~/.local/etc/kitty/sessions/
 User session configurations (created with \-\-create option)
 
 .TP
-.B /opt/etc/kitty/
+.B /opt/etc/kitty/sessions/
 Optional system-wide session configurations
 
 .TP
