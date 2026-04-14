@@ -16,13 +16,16 @@ Description: Robust wrapper for kitty terminal emulator with session presets
  allows launching terminal sessions with flexible configuration presets.
  .
  Features:
-  - Validates input parameters for security
-  - Searches for session configuration files in multiple standard locations
-  - Provides helpful error messages
-  - Launches kitty terminal with the specified session preset
+   - Validates input parameters for security
+   - Searches for session configuration files in multiple standard locations
+   - Provides helpful error messages
+   - Launches kitty terminal with the specified session preset
+   - Creates session configuration files from templates
+   - Creates .desktop launcher files for application menus
+   - Registers applications in desktop environment
  .
  Configuration search path (in order of priority):
-  - ./etc/kitty (current directory)
-  - ~/.local/etc/kitty (user home directory)
-  - /opt/etc/kitty (optional system-wide)
-  - ~/.config/kitty (kitty standard location)
+   - ./etc/kitty (current directory)
+   - ~/.local/etc/kitty (user home directory)
+   - /opt/etc/kitty (optional system-wide)
+   - ~/.config/kitty (kitty standard location)

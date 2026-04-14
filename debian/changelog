@@ -1,3 +1,15 @@
+kitty-launcher (0.3.0-1) unstable; urgency=medium
+
+  * Add .desktop launcher file creation with --create-launcher command
+  * Add system launcher installation with --install-launcher command
+  * Create ~/.local/share/applications directory for desktop integration
+  * Update debian package to include .desktop file installation
+  * Update documentation with launcher information
+  * Add comprehensive .desktop file examples and workflows
+  * Enhanced desktop environment integration
+
+ -- OpenCode Contributors <contributors@opencode.ai>  Tue, 14 Apr 2026 14:00:00 +0000
+
 kitty-launcher (0.2.0-1) unstable; urgency=medium
 
   * Add session file creation with --create command

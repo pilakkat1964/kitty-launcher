@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kitty Launcher
+Comment=Terminal session launcher for kitty emulator
+Exec=kitty-launcher
+Icon=kitty
+Terminal=false
+Categories=System;TerminalEmulator;Utility;
+StartupNotify=true

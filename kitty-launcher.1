@@ -1,4 +1,4 @@
-.TH KITTY-LAUNCHER 1 "April 2026" "kitty-launcher 0.2.0" "User Commands"
+.TH KITTY-LAUNCHER 1 "April 2026" "kitty-launcher 0.3.0" "User Commands"
 .SH NAME
 kitty-launcher \- Robust wrapper for launching kitty terminal sessions
 
@@ -58,6 +58,30 @@ Create a new file named <NAME>.session in ~/.local/etc/kitty/
 
 If no template file is available, a basic template will be created. The created
 file can then be edited to customize the session configuration.
+
+.TP
+.B \-\-create-launcher <LAUNCHER_NAME> <SESSION_NAME>
+Create a .desktop launcher file for launching a session from application menus.
+The program will:
+.RS
+.IP 1. 3
+Create the ~/.local/share/applications/ directory if it doesn't exist
+.IP 2. 3
+Generate a standard .desktop file named kitty-launcher-<LAUNCHER_NAME>.desktop
+.IP 3. 3
+Save the .desktop file in the applications directory
+.RE
+
+The created .desktop file can be used by desktop environments to add the launcher
+to application menus. You may need to refresh your desktop environment for changes
+to take effect.
+
+.TP
+.B \-\-install-launcher
+Install the main kitty-launcher application as a system launcher by creating a
+.desktop file in ~/.local/share/applications/. This registers kitty-launcher in
+the desktop application menu for quick access. You may need to refresh your desktop
+environment for changes to take effect.
 
 .SH SESSION SEARCH BEHAVIOR
 The program implements smart session file discovery with the following features:
@@ -167,6 +191,14 @@ Launch a session with explicit .session extension:
 .TP
 Create a new session configuration file:
 .B kitty-launcher \-\-create my-project
+
+.TP
+Create a launcher for the dev session:
+.B kitty-launcher \-\-create-launcher dev dev
+
+.TP
+Install the main application launcher:
+.B kitty-launcher \-\-install-launcher
 
 .TP
 Display help message:

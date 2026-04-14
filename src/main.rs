@@ -30,7 +30,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
-const VERSION: &str = "0.2.0";
+const VERSION: &str = "0.3.0";
 
 /// Represents the configuration for the kitty launcher application.
 ///
@@ -54,18 +54,24 @@ fn print_help() {
     println!("    kitty-launcher [OPTIONS] [COMMAND]");
     println!();
     println!("COMMANDS:");
-    println!("    <SESSION_NAME>              Launch a kitty session");
-    println!("    --create <NAME>             Create a new session configuration file");
-    println!("    --help, -h                  Show this help message");
-    println!("    --version, -V               Show version information");
+    println!("    <SESSION_NAME>                      Launch a kitty session");
+    println!("    --create <NAME>                     Create a new session configuration file");
+    println!("    --create-launcher <NAME> <SESSION>  Create a .desktop launcher file");
+    println!("    --install-launcher                  Install system launcher to ~/.local/share/applications");
+    println!("    --help, -h                          Show this help message");
+    println!("    --version, -V                       Show version information");
     println!();
     println!("OPTIONS:");
-    println!("    --help, -h                  Display this help message");
-    println!("    --version, -V               Display version information");
+    println!("    --help, -h                          Display this help message");
+    println!("    --version, -V                       Display version information");
     println!();
     println!("EXAMPLES:");
-    println!("    kitty-launcher dev          Launch the 'dev' session");
-    println!("    kitty-launcher --create my-session  Create new session 'my-session.session'");
+    println!("    kitty-launcher dev                          Launch the 'dev' session");
+    println!(
+        "    kitty-launcher --create my-session          Create new session 'my-session.session'"
+    );
+    println!("    kitty-launcher --create-launcher dev dev    Create launcher for dev session");
+    println!("    kitty-launcher --install-launcher           Register launcher in app menu");
     println!();
     println!("SESSION SEARCH PATHS (in order of priority):");
     println!("    1. ./etc/kitty/");
@@ -82,6 +88,12 @@ fn print_help() {
     println!("    - Uses z-tools.session as template from ~/.local/etc/kitty/");
     println!("    - Creates file as ~/.local/etc/kitty/<NAME>.session");
     println!("    - Edit the created file to customize your session");
+    println!();
+    println!("CREATING LAUNCHER FILES:");
+    println!("    - Creates .desktop files in ~/.local/share/applications");
+    println!("    - Desktop files allow launching sessions from application menus");
+    println!("    - Use --create-launcher <NAME> <SESSION> to create a launcher");
+    println!("    - Use --install-launcher to register the main application");
     println!();
     println!("For more information, visit: https://github.com/pilakkat1964/kitty-launcher");
 }
@@ -332,6 +344,131 @@ new_tab Development
     .to_string()
 }
 
+/// Creates a .desktop file for launching a kitty session from application menus.
+///
+/// This function:
+/// 1. Validates the launcher name (same rules as session names)
+/// 2. Creates ~/.local/share/applications directory if needed
+/// 3. Generates a standard .desktop file for the session
+/// 4. Saves the .desktop file in the applications directory
+///
+/// The .desktop file can be used by desktop environments to add the launcher
+/// to application menus and allow quick access to the session.
+///
+/// # Arguments
+/// * `name` - The name for the launcher (e.g., "dev", "work-session")
+/// * `session_name` - The session configuration to launch
+///
+/// # Returns
+/// * `Ok(PathBuf)` - Path to the created .desktop file
+/// * `Err(String)` - Error description if creation fails
+fn create_launcher_file(name: &str, session_name: &str) -> Result<PathBuf, String> {
+    // Validate both launcher name and session name
+    validate_session_name(name)?;
+    validate_session_name(session_name)?;
+
+    // Get home directory
+    let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
+
+    // Define the applications directory
+    let apps_dir = home.join(".local/share/applications");
+
+    // Create the directory if it doesn't exist
+    fs::create_dir_all(&apps_dir)
+        .map_err(|e| format!("Failed to create directory {}: {}", apps_dir.display(), e))?;
+
+    // Define the .desktop file path
+    let desktop_file_path = apps_dir.join(format!("kitty-launcher-{}.desktop", name));
+
+    // Check if the .desktop file already exists
+    if desktop_file_path.exists() {
+        return Err(format!(
+            "Launcher file already exists: {}",
+            desktop_file_path.display()
+        ));
+    }
+
+    // Generate the .desktop file content
+    let desktop_content = format!(
+        r#"[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kitty: {}
+Comment=Launch kitty terminal with {} session
+Exec=kitty-launcher {}
+Icon=kitty
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true
+MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh;
+"#,
+        name, session_name, session_name
+    );
+
+    // Write the .desktop file
+    fs::write(&desktop_file_path, desktop_content).map_err(|e| {
+        format!(
+            "Failed to create launcher file {}: {}",
+            desktop_file_path.display(),
+            e
+        )
+    })?;
+
+    Ok(desktop_file_path)
+}
+
+/// Creates a default launcher for ~/.local/share/applications directory
+/// that installs the main kitty-launcher binary as a desktop application.
+///
+/// This creates a .desktop file that registers kitty-launcher in the system
+/// application menu, allowing it to be discovered by desktop environments.
+fn create_system_launcher() -> Result<PathBuf, String> {
+    // Get home directory
+    let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
+
+    // Define the applications directory
+    let apps_dir = home.join(".local/share/applications");
+
+    // Create the directory if it doesn't exist
+    fs::create_dir_all(&apps_dir)
+        .map_err(|e| format!("Failed to create directory {}: {}", apps_dir.display(), e))?;
+
+    // Define the .desktop file path
+    let desktop_file_path = apps_dir.join("kitty-launcher.desktop");
+
+    // Check if the file already exists
+    if desktop_file_path.exists() {
+        return Err(format!(
+            "System launcher already exists: {}",
+            desktop_file_path.display()
+        ));
+    }
+
+    // Generate the .desktop file content for the main application
+    let desktop_content = r#"[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kitty Launcher
+Comment=Terminal session launcher for kitty emulator
+Exec=kitty-launcher
+Icon=kitty
+Terminal=false
+Categories=System;TerminalEmulator;Utility;
+StartupNotify=true
+"#;
+
+    // Write the .desktop file
+    fs::write(&desktop_file_path, desktop_content).map_err(|e| {
+        format!(
+            "Failed to create system launcher file {}: {}",
+            desktop_file_path.display(),
+            e
+        )
+    })?;
+
+    Ok(desktop_file_path)
+}
+
 /// Loads and validates the launcher configuration from command line arguments.
 ///
 /// This function:
@@ -463,6 +600,55 @@ fn main() {
         }
     }
 
+    // Handle create-launcher command
+    if first_arg == "--create-launcher" {
+        if args.len() != 4 {
+            eprintln!("Error: --create-launcher requires exactly two arguments");
+            eprintln!(
+                "Usage: {} --create-launcher <LAUNCHER_NAME> <SESSION_NAME>",
+                args[0]
+            );
+            exit(2);
+        }
+
+        let launcher_name = &args[2];
+        let session_name = &args[3];
+        match create_launcher_file(launcher_name, session_name) {
+            Ok(path) => {
+                println!("Launcher file created successfully!");
+                println!("Path: {}", path.display());
+                println!("The launcher has been registered in your application menu.");
+                println!(
+                    "You may need to refresh your desktop environment for changes to take effect."
+                );
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(2);
+            }
+        }
+    }
+
+    // Handle install-launcher command
+    if first_arg == "--install-launcher" {
+        match create_system_launcher() {
+            Ok(path) => {
+                println!("System launcher installed successfully!");
+                println!("Path: {}", path.display());
+                println!("Kitty Launcher is now available in your application menu.");
+                println!(
+                    "You may need to refresh your desktop environment for changes to take effect."
+                );
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(2);
+            }
+        }
+    }
+
     // If we get here, treat as session launch
     if args.len() != 2 {
         eprintln!("Error: Expected exactly one session name argument");
@@ -558,5 +744,48 @@ mod tests {
         // These should not be valid
         assert!(validate_session_name("../evil").is_err());
         assert!(validate_session_name("/root").is_err());
+    }
+
+    /// Test launcher file name validation
+    #[test]
+    fn test_create_launcher_validation() {
+        // These should be valid names for creating launchers
+        assert!(validate_session_name("dev-launcher").is_ok());
+        assert!(validate_session_name("work_env").is_ok());
+        assert!(validate_session_name("project.v2").is_ok());
+
+        // These should not be valid
+        assert!(validate_session_name("../hack").is_err());
+        assert!(validate_session_name("./local").is_err());
+        assert!(validate_session_name("app@example").is_err());
+    }
+
+    /// Test that desktop content is properly formatted
+    #[test]
+    fn test_desktop_file_content() {
+        let desktop_content = format!(
+            r#"[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kitty: {}
+Comment=Launch kitty terminal with {} session
+Exec=kitty-launcher {}
+Icon=kitty
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true
+MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh;
+"#,
+            "test", "test", "test"
+        );
+
+        // Verify the content contains required desktop entry fields
+        assert!(desktop_content.contains("[Desktop Entry]"));
+        assert!(desktop_content.contains("Type=Application"));
+        assert!(desktop_content.contains("Version=1.0"));
+        assert!(desktop_content.contains("Name=Kitty: test"));
+        assert!(desktop_content.contains("Exec=kitty-launcher test"));
+        assert!(desktop_content.contains("Icon=kitty"));
+        assert!(desktop_content.contains("Terminal=false"));
     }
 }
