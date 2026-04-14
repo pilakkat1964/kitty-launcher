@@ -1,1 +1,11 @@
 /target
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.substvars
+/debian/kitty-launcher/
+*.deb
+*.ddeb
+*.changes
+*.buildinfo
+*.tar.gz

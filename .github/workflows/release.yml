@@ -26,22 +26,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential debhelper dpkg-dev
     
-    - name: Build release binary
-      run: |
-        cargo build --release
-        strip target/release/kitty-launcher
-    
-    - name: Run tests
-      run: cargo test --release
+    - name: Build release binary with script wrapper
+      run: ./scripts/build.sh --release --strip --test
     
     - name: Build source archive
       run: |
         git archive --format=tar.gz --prefix=kitty-launcher-${GITHUB_REF#refs/tags/}/ HEAD > kitty-launcher-${GITHUB_REF#refs/tags/}.tar.gz
     
-    - name: Build Debian package
-      run: |
-        dpkg-buildpackage -us -uc
-        mv ../kitty-launcher_*_*.deb .
+    - name: Build Debian package with script wrapper
+      run: ./scripts/build-deb.sh --clean
     
     - name: Create Release
       uses: actions/create-release@v1

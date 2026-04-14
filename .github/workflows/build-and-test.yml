@@ -47,11 +47,8 @@ jobs:
     - name: Run clippy linter
       run: cargo clippy -- -D warnings
     
-    - name: Run tests
-      run: cargo test --verbose
-    
-    - name: Build release binary
-      run: cargo build --release --verbose
+    - name: Build and test with script wrapper
+      run: ./scripts/build.sh --release --test
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
