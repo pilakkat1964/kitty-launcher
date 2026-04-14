@@ -11,6 +11,7 @@ A robust, lightning-fast Rust-based terminal session manager for the [kitty term
 - [Use Cases & Workflows](#use-cases--workflows)
 - [KDE Plasma Integration](#kde-plasma-integration)
 - [Installation](#installation)
+- [Shell Completions](#shell-completions)
 - [Usage Guide](#usage-guide)
 - [Learning Resources](#learning-resources)
 
@@ -328,17 +329,60 @@ sudo cp target/release/kitty-launcher /usr/local/bin/
 ### From Debian Package
 
 ```bash
-sudo dpkg -i kitty-launcher_0.3.0_amd64.deb
+sudo dpkg -i kitty-launcher_0.4.0_amd64.deb
 ```
 
 ### Verification
 
 ```bash
 kitty-launcher --version
-# kitty-launcher v0.3.0
+# kitty-launcher v0.4.0
 # A robust Rust wrapper for the kitty terminal emulator
 # License: MIT
 ```
+
+### Shell Completions
+
+Enable tab-completion in your shell to quickly complete session names and commands:
+
+#### Bash Completion
+
+```bash
+# Add to ~/.bashrc
+kitty-launcher --generate-completions bash >> ~/.bashrc
+source ~/.bashrc
+```
+
+Or use the automated installer:
+
+```bash
+./scripts/install-completions.sh bash
+```
+
+#### Zsh Completion
+
+```bash
+# Add to ~/.zshrc
+kitty-launcher --generate-completions zsh >> ~/.zshrc
+source ~/.zshrc
+```
+
+Or use the automated installer:
+
+```bash
+./scripts/install-completions.sh zsh
+```
+
+#### Install All Completions
+
+```bash
+./scripts/install-completions.sh both
+```
+
+After installation, you can:
+- Type `kitty-launcher <TAB>` to see available sessions
+- Type `kitty-launcher -<TAB>` to see available flags
+- Type `kitty-launcher --create-launcher <TAB>` to select from existing sessions
 
 ## Usage Guide
 

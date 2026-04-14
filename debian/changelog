@@ -1,3 +1,15 @@
+kitty-launcher (0.4.0-1) unstable; urgency=medium
+
+  * Add shell completion generation with --generate-completions command
+  * Generate bash completion script with session name suggestions
+  * Generate zsh completion script with full descriptions
+  * Add scripts/install-completions.sh for automated setup
+  * Update debian package to install completion scripts
+  * Add completion documentation to help system
+  * Support for eval-based completion loading in shell RC files
+
+ -- OpenCode Contributors <contributors@opencode.ai>  Tue, 14 Apr 2026 16:00:00 +0000
+
 kitty-launcher (0.3.0-1) unstable; urgency=medium
 
   * Add .desktop launcher file creation with --create-launcher command
