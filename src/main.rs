@@ -50,47 +50,39 @@ fn print_help() {
         VERSION
     );
     println!();
+    println!("SYNOPSIS:");
+    println!("    A session manager for the kitty terminal emulator that allows you to:");
+    println!("    • Launch kitty with predefined session configurations");
+    println!("    • Generate session templates at organized search paths");
+    println!("    • Create .desktop launcher files for convenient GUI access");
+    println!();
     println!("USAGE:");
     println!("    kitty-launcher [OPTIONS] [COMMAND]");
     println!();
     println!("COMMANDS:");
     println!("    <SESSION_NAME>                              Launch a kitty session");
-    println!(
-        "    -c, --create <NAME>                         Create a new session configuration file"
-    );
+    println!("    -c, --create <NAME>                         Create a session template file");
     println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
-    println!("    --generate-completions <SHELL>              Generate shell completion scripts (bash|zsh)");
+    println!(
+        "    --generate-completions <SHELL>              Generate shell completions (bash|zsh)"
+    );
     println!("    -h, --help                                  Show this help message");
     println!("    -V, --version                               Show version information");
     println!();
     println!("OPTIONS:");
-    println!("    -h, --help                                  Display this help message");
-    println!("    -V, --version                               Display version information");
+    println!("    -h, --help                                  Display help");
+    println!("    -V, --version                               Display version");
     println!();
-    println!("EXAMPLES:");
-    println!("    kitty-launcher dev                          Launch the 'dev' session");
-    println!(
-        "    kitty-launcher -c my-session                Create new session 'my-session.session'"
-    );
-    println!("    kitty-launcher --create my-session          Create new session (long form)");
-    println!("    kitty-launcher -l dev dev                   Create launcher for dev session");
-    println!("    kitty-launcher -l myapp work                Create launcher 'myapp' for 'work' session");
-    println!(
-        "    kitty-launcher --create-launcher dev        Create launcher (uses dev as session)"
-    );
-    println!("    kitty-launcher --generate-completions bash  Output bash completion script");
-    println!("    kitty-launcher --generate-completions zsh   Output zsh completion script");
+    println!("QUICK START:");
+    println!("    # Create a session template");
+    println!("    kitty-launcher -c my-session");
+    println!("    $EDITOR ~/.local/etc/kitty/sessions/my-session.session");
     println!();
-    println!("SHORT FLAGS:");
-    println!("    -c, --create                Alias for session file creation");
-    println!("    -l, --create-launcher       Alias for launcher file creation");
-    println!("    -h, --help                  Display help (same as --help)");
-    println!("    -V, --version               Display version (same as --version)");
+    println!("    # Launch the session");
+    println!("    kitty-launcher my-session");
     println!();
-    println!("SHELL COMPLETIONS:");
-    println!("    To enable shell completions, run:");
-    println!("      bash:  kitty-launcher --generate-completions bash >> ~/.bashrc");
-    println!("      zsh:   kitty-launcher --generate-completions zsh >> ~/.zshrc");
+    println!("    # Create a launcher file for GUI access");
+    println!("    kitty-launcher -l 'My Session' my-session");
     println!();
     println!("SESSION SEARCH PATHS (in order of priority):");
     println!("    1. ./etc/kitty/sessions/");
@@ -99,22 +91,26 @@ fn print_help() {
     println!("    4. ~/.config/kitty/sessions/");
     println!();
     println!("SESSION FILE DISCOVERY:");
-    println!("    - Searches for <NAME> first");
-    println!("    - If not found and name doesn't end with .session, tries <NAME>.session");
-    println!("    - Session names must be alphanumeric with hyphens, underscores, or dots");
+    println!("    • Looks for exact name first, then tries <NAME>.session");
+    println!("    • Valid characters: alphanumeric, hyphens, underscores, dots");
     println!();
-    println!("CREATING NEW SESSIONS:");
-    println!("    - Uses z-tools.session as template from ~/.local/etc/kitty/sessions/");
-    println!("    - Creates file as ~/.local/etc/kitty/sessions/<NAME>.session");
-    println!("    - Edit the created file to customize your session");
+    println!("CREATING SESSION TEMPLATES:");
+    println!("    kitty-launcher -c <NAME> generates a session file at:");
+    println!("    ~/.local/etc/kitty/sessions/<NAME>.session");
+    println!();
+    println!("    Uses z-tools.session as template if available, otherwise creates a basic one.");
+    println!("    Edit the generated file to customize your session.");
     println!();
     println!("CREATING LAUNCHER FILES:");
-    println!("    - Creates .desktop files in ~/.local/share/applications");
-    println!("    - Desktop files allow launching sessions from application menus");
-    println!("    - Use -l <LAUNCHER_NAME> [SESSION] to create a launcher");
-    println!("    - If SESSION is omitted, uses LAUNCHER_NAME as the session");
+    println!("    kitty-launcher -l <LAUNCHER_NAME> [SESSION] generates a .desktop file.");
+    println!("    If SESSION is omitted, <LAUNCHER_NAME> is used as the session name.");
+    println!("    Files are created in ~/.local/share/applications/ for desktop access.");
     println!();
-    println!("For more information, visit: https://github.com/pilakkat1964/kitty-launcher");
+    println!("SHELL COMPLETIONS:");
+    println!("    bash:  kitty-launcher --generate-completions bash >> ~/.bashrc");
+    println!("    zsh:   kitty-launcher --generate-completions zsh >> ~/.zshrc");
+    println!();
+    println!("For more information: https://github.com/pilakkat1964/kitty-launcher");
 }
 
 /// Prints version information
