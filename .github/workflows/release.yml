@@ -1,4 +1,4 @@
-name: Release - Build and Publish
+name: Release - Build and Publish Binaries
 
 on:
   push:
@@ -6,9 +6,18 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    name: Create Release with Assets
+  build-matrix:
+    name: Build for ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            arch: amd64
+            dpkg_arch: amd64
+          - target: aarch64-unknown-linux-gnu
+            arch: arm64
+            dpkg_arch: arm64
     
     steps:
     - name: Checkout code
@@ -20,41 +29,187 @@ jobs:
         toolchain: stable
         profile: minimal
         override: true
+        target: ${{ matrix.target }}
     
     - name: Install build dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential debhelper dpkg-dev
+        
+    - name: Install cross-compilation tools for ARM64
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+        cargo install cross
     
-    - name: Build release binary with script wrapper
-      run: ./scripts/build.sh --release --strip --test
+    - name: Build release binary
+      run: |
+        if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+          cross build --release --target ${{ matrix.target }}
+        else
+          cargo build --release --target ${{ matrix.target }}
+        fi
     
-    - name: Build source archive
+    - name: Strip binary
+      run: |
+        if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/kitty-launcher
+        else
+          strip target/${{ matrix.target }}/release/kitty-launcher
+        fi
+    
+    - name: Create Debian package structure
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        mkdir -p debian_build/usr/bin
+        mkdir -p debian_build/usr/share/applications
+        mkdir -p debian_build/usr/share/man/man1
+        mkdir -p debian_build/usr/share/info
+        mkdir -p debian_build/etc/bash_completion.d
+        mkdir -p debian_build/usr/share/zsh/site-functions
+        
+        # Copy binary
+        cp target/${{ matrix.target }}/release/kitty-launcher debian_build/usr/bin/
+        
+        # Copy documentation
+        cp kitty-launcher.desktop debian_build/usr/share/applications/ || true
+        cp kitty-launcher.1 debian_build/usr/share/man/man1/ || true
+        cp kitty-launcher.info debian_build/usr/share/info/ || true
+        
+        # Generate and copy completions
+        target/${{ matrix.target }}/release/kitty-launcher --generate-completions bash > debian_build/etc/bash_completion.d/kitty-launcher 2>/dev/null || true
+        target/${{ matrix.target }}/release/kitty-launcher --generate-completions zsh > debian_build/usr/share/zsh/site-functions/_kitty-launcher 2>/dev/null || true
+        
+        # Create DEBIAN metadata directory
+        mkdir -p debian_build/DEBIAN
+        
+        # Generate control file
+        cat > debian_build/DEBIAN/control << EOF
+Package: kitty-launcher
+Version: $VERSION-1
+Architecture: ${{ matrix.dpkg_arch }}
+Maintainer: OpenCode Contributors <contributors@opencode.ai>
+Homepage: https://github.com/pilakkat1964/kitty-launcher
+Description: Terminal Session Manager for Kitty Emulator
+ A robust Rust-based wrapper for the kitty terminal emulator that allows
+ launching terminal sessions with flexible configuration presets.
+ .
+ Features:
+  - Multiple session management
+  - Desktop environment integration
+  - Shell completions (bash/zsh)
+  - KDE Plasma folder view support
+  - Security-focused input validation
+EOF
+        
+        # Generate postinst script
+        cat > debian_build/DEBIAN/postinst << 'EOF'
+#!/bin/bash
+set -e
+
+# Update desktop database
+update-desktop-database /usr/share/applications 2>/dev/null || true
+
+# Message about shell completion
+echo "Shell completions installed. To enable them:"
+echo "  Bash: source ~/.bashrc or run 'source <(kitty-launcher --generate-completions bash)'"
+echo "  Zsh:  source ~/.zshrc or run 'source <(kitty-launcher --generate-completions zsh)'"
+
+exit 0
+EOF
+        chmod 755 debian_build/DEBIAN/postinst
+    
+    - name: Build .deb package
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        dpkg-deb --build debian_build kitty-launcher_${VERSION}-1_${{ matrix.dpkg_arch }}.deb
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: kitty-launcher_${{ matrix.dpkg_arch }}.deb
+        path: kitty-launcher_*_${{ matrix.dpkg_arch }}.deb
+        retention-days: 1
+
+  create-release:
+    name: Create Release with Assets
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    
+    - name: Build release binary for source archive
+      run: cargo build --release
+    
+    - name: Create source archive
       run: |
         git archive --format=tar.gz --prefix=kitty-launcher-${GITHUB_REF#refs/tags/}/ HEAD > kitty-launcher-${GITHUB_REF#refs/tags/}.tar.gz
     
-    - name: Build Debian package with script wrapper
-      run: ./scripts/build-deb.sh --clean
+    - name: Prepare release assets
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        
+        # List all downloaded debs
+        echo "Available Debian packages:"
+        find . -name "*.deb" -type f | sort
+        
+        # Rename for clarity
+        if [ -f "kitty-launcher_amd64.deb/kitty-launcher_${VERSION}-1_amd64.deb" ]; then
+          cp "kitty-launcher_amd64.deb/kitty-launcher_${VERSION}-1_amd64.deb" "kitty-launcher_${VERSION}-1_amd64.deb"
+        fi
+        
+        if [ -f "kitty-launcher_arm64.deb/kitty-launcher_${VERSION}-1_arm64.deb" ]; then
+          cp "kitty-launcher_arm64.deb/kitty-launcher_${VERSION}-1_arm64.deb" "kitty-launcher_${VERSION}-1_arm64.deb"
+        fi
+        
+        # Strip and prepare binary
+        strip target/release/kitty-launcher
+        cp target/release/kitty-launcher kitty-launcher-${GITHUB_REF#refs/tags/}-linux-amd64
     
     - name: Create Release
-      uses: actions/create-release@v1
-      id: create_release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        files: |
+          kitty-launcher-*.tar.gz
+          kitty-launcher_*-1_amd64.deb
+          kitty-launcher_*-1_arm64.deb
+          kitty-launcher-*-linux-amd64
         body: |
-          # Kitty Launcher Release ${{ github.ref_name }}
+          ## 📦 Release Assets
           
-          Production-ready Rust application for kitty terminal emulator.
+          ### Binaries
+          - **kitty-launcher-${{ github.ref_name }}-linux-amd64** - Precompiled binary for x86_64
           
-          ## Assets
-          - Source archive (tar.gz)
-          - Debian package (.deb)
-          - Release binary
+          ### Debian Packages (Recommended)
+          - **kitty-launcher_*-1_amd64.deb** - For x86_64 systems
+          - **kitty-launcher_*-1_arm64.deb** - For ARM64 systems (Raspberry Pi, etc.)
           
-          ## Installation
+          ### Source
+          - **kitty-launcher-${{ github.ref_name }}.tar.gz** - Source code archive
+          
+          ## 🚀 Installation
+          
+          ### On Debian/Ubuntu (AMD64):
+          ```bash
+          sudo dpkg -i kitty-launcher_*-1_amd64.deb
+          ```
+          
+          ### On ARM64 systems:
+          ```bash
+          sudo dpkg -i kitty-launcher_*-1_arm64.deb
+          ```
           
           ### From source:
           ```bash
@@ -64,59 +219,30 @@ jobs:
           sudo cp target/release/kitty-launcher /usr/local/bin/
           ```
           
-          ### From Debian package:
-          ```bash
-          sudo dpkg -i kitty-launcher_*_*.deb
-          ```
+          ## 📖 Documentation
+          - **README.md** - Getting started guide
+          - **LEARNING_GUIDE.md** - Rust learning resource
+          - **INSTALL.md** - Detailed installation instructions
+          - **QUICK_REFERENCE.md** - Command reference
           
-          ## Documentation
-          - README.md - Getting started
-          - LEARNING_GUIDE.md - Learn Rust
-          - INSTALL.md - Installation guide
-          - QUICK_REFERENCE.md - Command reference
-          
-          See the repository for full documentation.
-        draft: false
-        prerelease: false
-    
-    - name: Upload source archive
-      uses: actions/upload-release-asset@v1
+          See the repository for complete documentation.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: kitty-launcher-${{ github.ref_name }}.tar.gz
-        asset_name: kitty-launcher-${{ github.ref_name }}.tar.gz
-        asset_content_type: application/gzip
-    
-    - name: Upload Debian package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: kitty-launcher_${{ github.ref_name }}_*.deb
-        asset_name: kitty-launcher_${{ github.ref_name }}_amd64.deb
-        asset_content_type: application/vnd.debian.binary-package
-    
-    - name: Upload release binary
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: target/release/kitty-launcher
-        asset_name: kitty-launcher-${{ github.ref_name }}-linux-x64
-        asset_content_type: application/octet-stream
     
     - name: Create GitHub Release Summary
       run: |
         echo "## Release Created Successfully ✅" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Release Name**: kitty-launcher" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Assets" >> $GITHUB_STEP_SUMMARY
-        echo "- Source archive" >> $GITHUB_STEP_SUMMARY
-        echo "- Debian package (.deb)" >> $GITHUB_STEP_SUMMARY
-        echo "- Release binary" >> $GITHUB_STEP_SUMMARY
+        echo "### Assets Included" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Source archive (tar.gz)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Debian package for AMD64 (.deb)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Debian package for ARM64 (.deb)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Precompiled binary (x86_64)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Installation Methods" >> $GITHUB_STEP_SUMMARY
+        echo "1. **Recommended**: Install via Debian package" >> $GITHUB_STEP_SUMMARY
+        echo "2. Use precompiled binary for immediate use" >> $GITHUB_STEP_SUMMARY
+        echo "3. Build from source for other architectures" >> $GITHUB_STEP_SUMMARY
+
