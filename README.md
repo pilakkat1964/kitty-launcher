@@ -317,6 +317,24 @@ kitty-launcher -l "Data-Science/Training" gpu-training
 
 ## Installation
 
+### From Debian Package (Recommended)
+
+**For AMD64 Systems (Intel/AMD 64-bit):**
+
+```bash
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher_0.4.0-1_amd64.deb
+sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
+```
+
+**For ARM64 Systems (Raspberry Pi, Apple Silicon, etc.):**
+
+```bash
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher_0.4.0-1_arm64.deb
+sudo dpkg -i kitty-launcher_0.4.0-1_arm64.deb
+```
+
+Debian packages include shell completions (bash/zsh) pre-configured for instant use!
+
 ### From Source
 
 ```bash
@@ -326,10 +344,12 @@ cargo build --release
 sudo cp target/release/kitty-launcher /usr/local/bin/
 ```
 
-### From Debian Package
+### From Precompiled Binary
 
 ```bash
-sudo dpkg -i kitty-launcher_0.4.0_amd64.deb
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher-v0.4.0-linux-amd64
+chmod +x kitty-launcher-v0.4.0-linux-amd64
+sudo cp kitty-launcher-v0.4.0-linux-amd64 /usr/local/bin/kitty-launcher
 ```
 
 ### Verification
