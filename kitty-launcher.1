@@ -232,6 +232,48 @@ Display version information (short form):
 Display version information (long form):
 .B kitty-launcher --version
 
+.SH USE CASES
+
+.B Power User Development
+
+For developers managing multiple project environments, kitty-launcher enables instant context
+switching between different configurations:
+
+   kitty-launcher -c frontend      # Node.js, npm, JavaScript environment
+   kitty-launcher -c backend       # Python, Django, database tools
+   kitty-launcher -c devops        # Docker, Kubernetes, deployment tools
+
+Create desktop launchers for each:
+
+   kitty-launcher -l "Frontend" frontend
+   kitty-launcher -l "Backend" backend
+   kitty-launcher -l "DevOps" devops
+
+Then launch any environment with a single click from your desktop.
+
+.B System Administration
+
+Manage multiple remote environments and tool configurations:
+
+   kitty-launcher -c prod-access      # Production SSH with limited tools
+   kitty-launcher -c staging-debug    # Staging with debugging tools
+   kitty-launcher -c monitoring       # Log aggregation, metrics, alerts
+
+Quickly switch between environments without manual setup:
+
+   kitty-launcher prod-access    # Instant production terminal
+
+.B KDE Plasma Integration
+
+Combine with KDE Plasma's folder view for cascading menu navigation:
+
+1. Create launcher files: kitty-launcher -l "Project Name" session-name
+2. Add folder view widget to desktop pointing to ~/.local/share/applications
+3. Hover over folder icon → see all launchers
+4. Click any launcher → terminal opens with that environment
+
+This provides instant visual access to all configured environments.
+
 .SH ENVIRONMENT VARIABLES
 .TP
 .B HOME

@@ -26,6 +26,7 @@ custom layouts, working directories, and applications.
 * Creating Launchers::      How to create .desktop launcher files
 * Examples::                Usage examples
 * Configuration::           Configuration file locations
+* Use Cases::               Real-world workflows and scenarios
 * Exit Codes::              Meaning of exit codes
 * Environment::             Environment variables used
 * Limitations::             Known limitations and workarounds
@@ -365,7 +366,7 @@ Long form:
 Shows version information and licensing details.
 
 
-File: kitty-launcher.info, Node: Configuration, Next: Exit Codes, Prev: Examples, Up: Top
+File: kitty-launcher.info, Node: Configuration, Next: Use Cases, Prev: Examples, Up: Top
 
 Configuration
 **************
@@ -400,7 +401,79 @@ For complete documentation, see:
 https://sw.kovidgoyal.net/kitty/conf/
 
 
-File: kitty-launcher.info, Node: Exit Codes, Next: Environment, Prev: Configuration, Up: Top
+File: kitty-launcher.info, Node: Use Cases, Next: Exit Codes, Prev: Configuration, Up: Top
+
+Use Cases
+*********
+
+Perfect for Multiple Scenarios
+
+Web Developers
+==============
+
+Managing multiple environments:
+
+   kitty-launcher -c frontend     # Node.js, npm, linting
+   kitty-launcher -c backend      # Python/Django, database tools
+   kitty-launcher -c devops       # Docker, CI/CD deployment
+
+Create visual launchers:
+
+   kitty-launcher -l "Frontend" frontend
+   kitty-launcher -l "Backend" backend
+   kitty-launcher -l "DevOps" devops
+
+Result: Click icon on desktop → terminal launches with full environment configured
+
+
+System Administrators
+=====================
+
+Managing remote environments and tool configurations:
+
+   kitty-launcher -c prod-access      # Production SSH with restricted tools
+   kitty-launcher -c staging-debug    # Staging environment with debuggers
+   kitty-launcher -c monitoring       # Log aggregation, metrics, alerting
+
+Never accidentally deploy to wrong environment. Each launcher pre-configures:
+   • Correct credentials
+   • Right region/cluster
+   • Appropriate tool access level
+   • Audit logging enabled
+
+
+Data Scientists
+===============
+
+Managing analysis and training environments:
+
+   kitty-launcher -c analysis         # Jupyter, pandas, exploration
+   kitty-launcher -c gpu-training     # CUDA, PyTorch, model training
+   kitty-launcher -c visualization    # Plotting tools, dashboards
+
+Quick context switching between analysis, training, and presentation modes.
+
+
+KDE Plasma Desktop Integration
+===============================
+
+Combine with folder view widget for visual environment access:
+
+1. Create launchers:
+      kitty-launcher -l "Dev Project" dev
+      kitty-launcher -l "Staging" staging
+      kitty-launcher -l "Production" production
+
+2. Add folder view to desktop: ~/.local/share/applications/
+
+3. Hover over folder → cascading menu shows all launchers
+
+4. Click launcher → terminal opens with that environment
+
+Result: Visual desktop access to all configured terminal environments
+
+
+File: kitty-launcher.info, Node: Exit Codes, Next: Environment, Prev: Use Cases, Up: Top
 
 Exit Codes
 **********
