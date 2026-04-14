@@ -59,8 +59,12 @@ jobs:
         fi
     
     - name: Create Debian package structure
+      env:
+        VERSION: ${{ github.ref_name }}
+        DPKG_ARCH: ${{ matrix.dpkg_arch }}
+        TARGET: ${{ matrix.target }}
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
+        VERSION=${VERSION#v}
         mkdir -p debian_build/usr/bin
         mkdir -p debian_build/usr/share/applications
         mkdir -p debian_build/usr/share/man/man1
@@ -69,7 +73,7 @@ jobs:
         mkdir -p debian_build/usr/share/zsh/site-functions
         
         # Copy binary
-        cp target/${{ matrix.target }}/release/kitty-launcher debian_build/usr/bin/
+        cp target/${TARGET}/release/kitty-launcher debian_build/usr/bin/
         
         # Copy documentation
         cp kitty-launcher.desktop debian_build/usr/share/applications/ || true
@@ -77,46 +81,46 @@ jobs:
         cp kitty-launcher.info debian_build/usr/share/info/ || true
         
         # Generate and copy completions
-        target/${{ matrix.target }}/release/kitty-launcher --generate-completions bash > debian_build/etc/bash_completion.d/kitty-launcher 2>/dev/null || true
-        target/${{ matrix.target }}/release/kitty-launcher --generate-completions zsh > debian_build/usr/share/zsh/site-functions/_kitty-launcher 2>/dev/null || true
+        target/${TARGET}/release/kitty-launcher --generate-completions bash > debian_build/etc/bash_completion.d/kitty-launcher 2>/dev/null || true
+        target/${TARGET}/release/kitty-launcher --generate-completions zsh > debian_build/usr/share/zsh/site-functions/_kitty-launcher 2>/dev/null || true
         
         # Create DEBIAN metadata directory
         mkdir -p debian_build/DEBIAN
         
-        # Generate control file
-        cat > debian_build/DEBIAN/control << EOF
-Package: kitty-launcher
-Version: $VERSION-1
-Architecture: ${{ matrix.dpkg_arch }}
-Maintainer: OpenCode Contributors <contributors@opencode.ai>
-Homepage: https://github.com/pilakkat1964/kitty-launcher
-Description: Terminal Session Manager for Kitty Emulator
- A robust Rust-based wrapper for the kitty terminal emulator that allows
- launching terminal sessions with flexible configuration presets.
- .
- Features:
-  - Multiple session management
-  - Desktop environment integration
-  - Shell completions (bash/zsh)
-  - KDE Plasma folder view support
-  - Security-focused input validation
-EOF
+        # Generate control file with proper formatting
+        {
+          echo "Package: kitty-launcher"
+          echo "Version: ${VERSION}-1"
+          echo "Architecture: ${DPKG_ARCH}"
+          echo "Maintainer: OpenCode Contributors <contributors@opencode.ai>"
+          echo "Homepage: https://github.com/pilakkat1964/kitty-launcher"
+          echo "Description: Terminal Session Manager for Kitty Emulator"
+          echo " A robust Rust-based wrapper for the kitty terminal emulator that allows"
+          echo " launching terminal sessions with flexible configuration presets."
+          echo " ."
+          echo " Features:"
+          echo "  - Multiple session management"
+          echo "  - Desktop environment integration"
+          echo "  - Shell completions (bash/zsh)"
+          echo "  - KDE Plasma folder view support"
+          echo "  - Security-focused input validation"
+        } > debian_build/DEBIAN/control
         
         # Generate postinst script
-        cat > debian_build/DEBIAN/postinst << 'EOF'
-#!/bin/bash
-set -e
-
-# Update desktop database
-update-desktop-database /usr/share/applications 2>/dev/null || true
-
-# Message about shell completion
-echo "Shell completions installed. To enable them:"
-echo "  Bash: source ~/.bashrc or run 'source <(kitty-launcher --generate-completions bash)'"
-echo "  Zsh:  source ~/.zshrc or run 'source <(kitty-launcher --generate-completions zsh)'"
-
-exit 0
-EOF
+        {
+          echo "#!/bin/bash"
+          echo "set -e"
+          echo ""
+          echo "# Update desktop database"
+          echo "update-desktop-database /usr/share/applications 2>/dev/null || true"
+          echo ""
+          echo "# Message about shell completion"
+          echo "echo \"Shell completions installed. To enable them:\""
+          echo "echo \"  Bash: source ~/.bashrc or run 'source <(kitty-launcher --generate-completions bash)'\""
+          echo "echo \"  Zsh:  source ~/.zshrc or run 'source <(kitty-launcher --generate-completions zsh)'\""
+          echo ""
+          echo "exit 0"
+        } > debian_build/DEBIAN/postinst
         chmod 755 debian_build/DEBIAN/postinst
     
     - name: Build .deb package
