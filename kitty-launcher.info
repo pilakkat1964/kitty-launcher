@@ -57,10 +57,20 @@ Commands
      will search for the session configuration file in multiple standard
      locations.
 
- --create <NAME>
+ -c, --create <NAME>
      Create a new session configuration file. Creates a file named
      <NAME>.session in ~/.local/etc/kitty/ using z-tools.session as a
      template (if available).
+
+ -l, --create-launcher <LAUNCHER_NAME> [SESSION_NAME]
+     Create a .desktop launcher file for launching a session from application
+     menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.
+     Creates a file named kitty-launcher-<LAUNCHER_NAME>.desktop in
+     ~/.local/share/applications/.
+
+ -i, --install-launcher
+     Install the main kitty-launcher application as a system launcher by
+     creating a .desktop file in ~/.local/share/applications/.
 
 
 File: kitty-launcher.info, Node: Session Names, Next: File Discovery, Prev: Usage, Up: Top
@@ -290,6 +300,10 @@ Launches the dev.session file directly.
 Create a New Session
 ====================
 
+Short form:
+   kitty-launcher -c my-project
+
+Long form:
    kitty-launcher --create my-project
 
 Creates a new session file at:
@@ -299,7 +313,14 @@ Creates a new session file at:
 Create a Launcher
 =================
 
+With launcher name and session name (short form):
+   kitty-launcher -l dev-env dev
+
+With launcher name and session name (long form):
    kitty-launcher --create-launcher dev-env dev
+
+With launcher name only (uses it as session):
+   kitty-launcher -l myapp
 
 Creates a .desktop launcher file at:
    ~/.local/share/applications/kitty-launcher-dev-env.desktop
@@ -310,6 +331,10 @@ You can now launch this session from your desktop application menu.
 Install System Launcher
 =======================
 
+Short form:
+   kitty-launcher -i
+
+Long form:
    kitty-launcher --install-launcher
 
 Registers the main kitty-launcher application in your desktop menu:
@@ -319,8 +344,11 @@ Registers the main kitty-launcher application in your desktop menu:
 Display Help
 ============
 
-   kitty-launcher --help
+Short form:
    kitty-launcher -h
+
+Long form:
+   kitty-launcher --help
 
 Shows comprehensive help message with all options and examples.
 
@@ -328,8 +356,11 @@ Shows comprehensive help message with all options and examples.
 Display Version
 ===============
 
-   kitty-launcher --version
+Short form:
    kitty-launcher -V
+
+Long form:
+   kitty-launcher --version
 
 Shows version information and licensing details.
 

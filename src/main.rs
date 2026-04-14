@@ -54,24 +54,39 @@ fn print_help() {
     println!("    kitty-launcher [OPTIONS] [COMMAND]");
     println!();
     println!("COMMANDS:");
-    println!("    <SESSION_NAME>                      Launch a kitty session");
-    println!("    --create <NAME>                     Create a new session configuration file");
-    println!("    --create-launcher <NAME> <SESSION>  Create a .desktop launcher file");
-    println!("    --install-launcher                  Install system launcher to ~/.local/share/applications");
-    println!("    --help, -h                          Show this help message");
-    println!("    --version, -V                       Show version information");
+    println!("    <SESSION_NAME>                              Launch a kitty session");
+    println!(
+        "    -c, --create <NAME>                         Create a new session configuration file"
+    );
+    println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
+    println!("    -i, --install-launcher                      Install system launcher to ~/.local/share/applications");
+    println!("    -h, --help                                  Show this help message");
+    println!("    -V, --version                               Show version information");
     println!();
     println!("OPTIONS:");
-    println!("    --help, -h                          Display this help message");
-    println!("    --version, -V                       Display version information");
+    println!("    -h, --help                                  Display this help message");
+    println!("    -V, --version                               Display version information");
     println!();
     println!("EXAMPLES:");
     println!("    kitty-launcher dev                          Launch the 'dev' session");
     println!(
-        "    kitty-launcher --create my-session          Create new session 'my-session.session'"
+        "    kitty-launcher -c my-session                Create new session 'my-session.session'"
     );
-    println!("    kitty-launcher --create-launcher dev dev    Create launcher for dev session");
-    println!("    kitty-launcher --install-launcher           Register launcher in app menu");
+    println!("    kitty-launcher --create my-session          Create new session (long form)");
+    println!("    kitty-launcher -l dev dev                   Create launcher for dev session");
+    println!("    kitty-launcher -l myapp work                Create launcher 'myapp' for 'work' session");
+    println!(
+        "    kitty-launcher --create-launcher dev        Create launcher (uses dev as session)"
+    );
+    println!("    kitty-launcher -i                           Register launcher in app menu");
+    println!("    kitty-launcher --install-launcher           Register launcher (long form)");
+    println!();
+    println!("SHORT FLAGS:");
+    println!("    -c, --create                Alias for session file creation");
+    println!("    -l, --create-launcher       Alias for launcher file creation");
+    println!("    -i, --install-launcher      Alias for system launcher installation");
+    println!("    -h, --help                  Display help (same as --help)");
+    println!("    -V, --version               Display version (same as --version)");
     println!();
     println!("SESSION SEARCH PATHS (in order of priority):");
     println!("    1. ./etc/kitty/");
@@ -92,8 +107,9 @@ fn print_help() {
     println!("CREATING LAUNCHER FILES:");
     println!("    - Creates .desktop files in ~/.local/share/applications");
     println!("    - Desktop files allow launching sessions from application menus");
-    println!("    - Use --create-launcher <NAME> <SESSION> to create a launcher");
-    println!("    - Use --install-launcher to register the main application");
+    println!("    - Use -l <LAUNCHER_NAME> [SESSION] to create a launcher");
+    println!("    - If SESSION is omitted, uses LAUNCHER_NAME as the session");
+    println!("    - Use -i to register the main application");
     println!();
     println!("For more information, visit: https://github.com/pilakkat1964/kitty-launcher");
 }
@@ -577,11 +593,14 @@ fn main() {
         exit(0);
     }
 
-    // Handle create command
-    if first_arg == "--create" {
+    // Handle create command (both --create and -c)
+    if first_arg == "--create" || first_arg == "-c" {
         if args.len() != 3 {
-            eprintln!("Error: --create requires exactly one argument (session name)");
-            eprintln!("Usage: {} --create <SESSION_NAME>", args[0]);
+            eprintln!(
+                "Error: {} requires exactly one argument (session name)",
+                first_arg
+            );
+            eprintln!("Usage: {} {} <SESSION_NAME>", args[0], first_arg);
             exit(2);
         }
 
@@ -600,23 +619,34 @@ fn main() {
         }
     }
 
-    // Handle create-launcher command
-    if first_arg == "--create-launcher" {
-        if args.len() != 4 {
-            eprintln!("Error: --create-launcher requires exactly two arguments");
+    // Handle create-launcher command (both --create-launcher and -l)
+    // Now accepts optional session name: if omitted, uses launcher name as session
+    if first_arg == "--create-launcher" || first_arg == "-l" {
+        if args.len() < 3 || args.len() > 4 {
+            eprintln!("Error: {} requires one or two arguments", first_arg);
             eprintln!(
-                "Usage: {} --create-launcher <LAUNCHER_NAME> <SESSION_NAME>",
-                args[0]
+                "Usage: {} {} <LAUNCHER_NAME> [SESSION_NAME]",
+                args[0], first_arg
             );
+            eprintln!();
+            eprintln!("If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.");
             exit(2);
         }
 
         let launcher_name = &args[2];
-        let session_name = &args[3];
+        // If session name is provided, use it; otherwise use launcher name
+        let session_name = if args.len() == 4 {
+            &args[3]
+        } else {
+            launcher_name
+        };
+
         match create_launcher_file(launcher_name, session_name) {
             Ok(path) => {
                 println!("Launcher file created successfully!");
                 println!("Path: {}", path.display());
+                println!("Launcher name: {}", launcher_name);
+                println!("Session: {}", session_name);
                 println!("The launcher has been registered in your application menu.");
                 println!(
                     "You may need to refresh your desktop environment for changes to take effect."
@@ -630,8 +660,8 @@ fn main() {
         }
     }
 
-    // Handle install-launcher command
-    if first_arg == "--install-launcher" {
+    // Handle install-launcher command (both --install-launcher and -i)
+    if first_arg == "--install-launcher" || first_arg == "-i" {
         match create_system_launcher() {
             Ok(path) => {
                 println!("System launcher installed successfully!");
