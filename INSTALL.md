@@ -1,6 +1,6 @@
 # Installation Guide for Kitty Launcher
 
-This guide covers installing kitty-launcher from source and as a Debian package.
+This guide covers installing kitty-launcher from pre-built packages, source, or as a Debian package.
 
 ## Prerequisites
 
@@ -17,7 +17,64 @@ sudo apt-get install kitty
 # Or compile from source (https://sw.kovidgoyal.net/kitty/build/)
 ```
 
-## Option 1: Install from Source (Development)
+## Option 1: Install from Pre-built Debian Package (Recommended)
+
+Pre-built Debian packages are available for both AMD64 and ARM64 systems with shell completions included.
+
+### For AMD64 Systems (Intel/AMD 64-bit)
+
+```bash
+# Download the latest AMD64 package
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher_0.4.0-1_amd64.deb
+
+# Install
+sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
+
+# Verify
+kitty-launcher --version
+```
+
+### For ARM64 Systems (Raspberry Pi, Apple Silicon, etc.)
+
+```bash
+# Download the latest ARM64 package
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher_0.4.0-1_arm64.deb
+
+# Install
+sudo dpkg -i kitty-launcher_0.4.0-1_arm64.deb
+
+# Verify
+kitty-launcher --version
+```
+
+The Debian packages include pre-configured shell completions for bash and zsh!
+
+### Benefits of Package Installation
+- ✅ Shell completions pre-configured
+- ✅ Man pages installed
+- ✅ System-wide binary in PATH
+- ✅ Easy updates with package manager
+- ✅ Clean uninstall via `apt remove`
+
+## Option 2: Install from Precompiled Binary
+
+Download the precompiled AMD64 binary directly:
+
+```bash
+# Download
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.0/kitty-launcher-v0.4.0-linux-amd64
+
+# Make executable
+chmod +x kitty-launcher-v0.4.0-linux-amd64
+
+# Install to system path
+sudo cp kitty-launcher-v0.4.0-linux-amd64 /usr/local/bin/kitty-launcher
+
+# Verify
+kitty-launcher --version
+```
+
+## Option 3: Build and Install from Source (Development)
 
 ### Prerequisites for Building
 
@@ -42,7 +99,7 @@ kitty-launcher --help
 which kitty-launcher
 ```
 
-## Option 2: Build and Install Debian Package
+## Option 4: Build and Install Debian Package from Source
 
 ### Prerequisites
 
@@ -54,15 +111,15 @@ sudo apt-get install cargo rustc build-essential debhelper dpkg-dev
 
 ```bash
 cd kitty-launcher
-dpkg-buildpackage -us -uc
+./scripts/build-deb.sh --clean
 ```
 
-This will create a `.deb` file in the parent directory.
+This will create a `.deb` file in the project directory.
 
 ### Install Package
 
 ```bash
-sudo dpkg -i ../kitty-launcher_0.1.0-1_*.deb
+sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
 ```
 
 ### Verify Installation
