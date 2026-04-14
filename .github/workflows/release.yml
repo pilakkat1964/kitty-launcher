@@ -1,0 +1,129 @@
+name: Release - Build and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create Release with Assets
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential debhelper dpkg-dev
+    
+    - name: Build release binary
+      run: |
+        cargo build --release
+        strip target/release/kitty-launcher
+    
+    - name: Run tests
+      run: cargo test --release
+    
+    - name: Build source archive
+      run: |
+        git archive --format=tar.gz --prefix=kitty-launcher-${GITHUB_REF#refs/tags/}/ HEAD > kitty-launcher-${GITHUB_REF#refs/tags/}.tar.gz
+    
+    - name: Build Debian package
+      run: |
+        dpkg-buildpackage -us -uc
+        mv ../kitty-launcher_*_*.deb .
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          # Kitty Launcher Release ${{ github.ref_name }}
+          
+          Production-ready Rust application for kitty terminal emulator.
+          
+          ## Assets
+          - Source archive (tar.gz)
+          - Debian package (.deb)
+          - Release binary
+          
+          ## Installation
+          
+          ### From source:
+          ```bash
+          tar xzf kitty-launcher-*.tar.gz
+          cd kitty-launcher-*
+          cargo build --release
+          sudo cp target/release/kitty-launcher /usr/local/bin/
+          ```
+          
+          ### From Debian package:
+          ```bash
+          sudo dpkg -i kitty-launcher_*_*.deb
+          ```
+          
+          ## Documentation
+          - README.md - Getting started
+          - LEARNING_GUIDE.md - Learn Rust
+          - INSTALL.md - Installation guide
+          - QUICK_REFERENCE.md - Command reference
+          
+          See the repository for full documentation.
+        draft: false
+        prerelease: false
+    
+    - name: Upload source archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: kitty-launcher-${{ github.ref_name }}.tar.gz
+        asset_name: kitty-launcher-${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Upload Debian package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: kitty-launcher_${{ github.ref_name }}_*.deb
+        asset_name: kitty-launcher_${{ github.ref_name }}_amd64.deb
+        asset_content_type: application/vnd.debian.binary-package
+    
+    - name: Upload release binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/release/kitty-launcher
+        asset_name: kitty-launcher-${{ github.ref_name }}-linux-x64
+        asset_content_type: application/octet-stream
+    
+    - name: Create GitHub Release Summary
+      run: |
+        echo "## Release Created Successfully ✅" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Release Name**: kitty-launcher" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Assets" >> $GITHUB_STEP_SUMMARY
+        echo "- Source archive" >> $GITHUB_STEP_SUMMARY
+        echo "- Debian package (.deb)" >> $GITHUB_STEP_SUMMARY
+        echo "- Release binary" >> $GITHUB_STEP_SUMMARY
