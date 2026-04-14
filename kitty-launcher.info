@@ -10,7 +10,7 @@ File: kitty-launcher.info, Node: Top, Next: Usage, Up: (dir)
 kitty-launcher Manual
 *********************
 
-This manual describes kitty-launcher version 0.5.0.
+This manual describes kitty-launcher version 0.5.1.
 
 kitty-launcher is a robust Rust wrapper for the kitty terminal emulator that
 allows launching terminal sessions with flexible configuration presets. It
