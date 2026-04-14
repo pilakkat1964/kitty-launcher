@@ -1,9 +1,12 @@
 [package]
 name = "kitty-launcher"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["OpenCode Contributors"]
 description = "A robust Rust wrapper for kitty terminal emulator with flexible session presets"
 license = "MIT"
+documentation = "https://github.com/pilakkat1964/kitty-launcher"
+repository = "https://github.com/pilakkat1964/kitty-launcher"
+readme = "README.md"
 
 [dependencies]
