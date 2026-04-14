@@ -1,0 +1,10 @@
+kitty-launcher (0.1.0-1) unstable; urgency=low
+
+  * Initial release
+  * Robust Rust-based wrapper for kitty terminal emulator
+  * Input validation and security checks
+  * Multiple configuration search paths
+  * Comprehensive error handling and user feedback
+  * Well-documented code for Rust learners
+
+ -- OpenCode Contributors <contributors@opencode.ai>  Tue, 14 Apr 2026 00:00:00 +0000

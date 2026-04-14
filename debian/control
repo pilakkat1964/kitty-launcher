@@ -1,0 +1,28 @@
+Source: kitty-launcher
+Section: x11
+Priority: optional
+Maintainer: OpenCode Contributors <contributors@opencode.ai>
+Homepage: https://github.com/anomalyco/opencode
+Vcs-Git: https://github.com/anomalyco/opencode.git
+Vcs-Browser: https://github.com/anomalyco/opencode
+Standards-Version: 4.6.0
+Build-Depends: debhelper-compat (= 13), cargo, rustc
+
+Package: kitty-launcher
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, kitty
+Description: Robust wrapper for kitty terminal emulator with session presets
+ kitty-launcher is a Rust-based wrapper for the kitty terminal emulator that
+ allows launching terminal sessions with flexible configuration presets.
+ .
+ Features:
+  - Validates input parameters for security
+  - Searches for session configuration files in multiple standard locations
+  - Provides helpful error messages
+  - Launches kitty terminal with the specified session preset
+ .
+ Configuration search path (in order of priority):
+  - ./etc/kitty (current directory)
+  - ~/.local/etc/kitty (user home directory)
+  - /opt/etc/kitty (optional system-wide)
+  - ~/.config/kitty (kitty standard location)

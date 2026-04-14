@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Kitty Launcher Icon: Terminal with windows overlay -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <style>
+      .terminal-bg { fill: #1e1e1e; }
+      .terminal-border { fill: none; stroke: #4a90e2; stroke-width: 2; }
+      .kitty-orange { fill: #ff8800; }
+      .kitty-purple { fill: #8844ff; }
+      .window-frame { fill: none; stroke: #4a90e2; stroke-width: 1.5; }
+      .window-bg { fill: #e8f4f8; opacity: 0.9; }
+    </style>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="62" fill="#ffffff" stroke="#4a90e2" stroke-width="1"/>
+
+  <!-- Main terminal window -->
+  <rect class="terminal-bg" x="8" y="8" width="112" height="92" rx="4"/>
+  <rect class="terminal-border" x="8" y="8" width="112" height="92" rx="4"/>
+
+  <!-- Terminal title bar -->
+  <rect fill="#0a0a0a" x="8" y="8" width="112" height="20" rx="4"/>
+  <circle fill="#ff5f56" cx="20" cy="18" r="3"/>
+  <circle fill="#ffbd2e" cx="32" cy="18" r="3"/>
+  <circle fill="#27c93f" cx="44" cy="18" r="3"/>
+
+  <!-- Terminal text lines (simulated) -->
+  <text x="16" y="40" fill="#00ff00" font-family="monospace" font-size="6">$ kitty-launcher</text>
+  <text x="16" y="50" fill="#00ff00" font-family="monospace" font-size="6">$ launching session...</text>
+  <rect fill="#00aa00" x="16" y="52" width="3" height="6"/>
+
+  <!-- Kitty paw print element (left side, bottom) -->
+  <circle class="kitty-orange" cx="28" cy="82" r="4"/>
+  <circle class="kitty-orange" cx="20" cy="76" r="2.5"/>
+  <circle class="kitty-orange" cx="24" cy="72" r="2.5"/>
+  <circle class="kitty-orange" cx="32" cy="74" r="2.5"/>
+  <circle class="kitty-orange" cx="36" cy="78" r="2.5"/>
+
+  <!-- Windows overlay - cascading windows concept -->
+  <!-- Window 1 (back) -->
+  <rect class="window-bg" x="48" y="42" width="32" height="28" rx="2"/>
+  <rect class="window-frame" x="48" y="42" width="32" height="28" rx="2"/>
+  <rect fill="#4a90e2" x="48" y="42" width="32" height="6"/>
+  <text x="52" y="47" fill="white" font-family="sans-serif" font-size="4" font-weight="bold">Window 1</text>
+
+  <!-- Window 2 (middle) -->
+  <rect class="window-bg" x="60" y="52" width="36" height="28" rx="2"/>
+  <rect class="window-frame" x="60" y="52" width="36" height="28" rx="2"/>
+  <rect fill="#4a90e2" x="60" y="52" width="36" height="6"/>
+  <text x="64" y="57" fill="white" font-family="sans-serif" font-size="4" font-weight="bold">Window 2</text>
+
+  <!-- Window 3 (front) -->
+  <g>
+    <rect class="window-bg" x="72" y="62" width="38" height="28" rx="2"/>
+    <rect class="window-frame" x="72" y="62" width="38" height="28" rx="2"/>
+    <rect fill="#8844ff" x="72" y="62" width="38" height="6"/>
+    <text x="76" y="67" fill="white" font-family="sans-serif" font-size="4" font-weight="bold">Sessions</text>
+  </g>
+
+  <!-- Kitty silhouette overlay (top right corner for branding) -->
+  <g transform="translate(98, 16) scale(1.2)">
+    <!-- Simplified kitty cat head -->
+    <ellipse cx="0" cy="2" rx="4" ry="5" fill="#ff8800" opacity="0.8"/>
+    <polygon points="-3,6 -2,10 0,9 2,10 3,6" fill="#ff8800" opacity="0.8"/>
+    <!-- Ears -->
+    <polygon points="-4,0 -5,-3 -2,-1" fill="#ff8800" opacity="0.8"/>
+    <polygon points="4,0 5,-3 2,-1" fill="#ff8800" opacity="0.8"/>
+  </g>
+
+  <!-- Bottom label -->
+  <text x="64" y="120" text-anchor="middle" fill="#4a90e2" font-family="sans-serif" font-size="8" font-weight="bold">kitty-launcher</text>
+</svg>
