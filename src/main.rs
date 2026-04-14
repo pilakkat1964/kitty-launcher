@@ -30,7 +30,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
-const VERSION: &str = "0.4.0";
+const VERSION: &str = "0.5.0";
 
 /// Represents the configuration for the kitty launcher application.
 ///
