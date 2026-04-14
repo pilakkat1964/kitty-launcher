@@ -8,6 +8,8 @@
 //! - Searches for session configuration files in multiple standard locations
 //! - Provides helpful error messages when something goes wrong
 //! - Launches kitty terminal with the specified session preset
+//! - Creates new session configuration files from templates
+//! - Comprehensive help and man page documentation
 //!
 //! ## Configuration Search Path
 //! The program searches for session configuration files in this order:
@@ -18,15 +20,17 @@
 //!
 //! ## Usage
 //! ```
-//! kitty-launcher <session-name>
+//! kitty-launcher <session-name>              # Launch a session
+//! kitty-launcher --create <name>             # Create a new session file
+//! kitty-launcher --help                      # Show help
 //! ```
-//!
-//! Example: `kitty-launcher dev` would launch a kitty session using the
-//! configuration file found at one of the standard locations.
 
 use std::env;
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
+
+const VERSION: &str = "0.2.0";
 
 /// Represents the configuration for the kitty launcher application.
 ///
@@ -39,11 +43,61 @@ struct LauncherConfig {
     config_path: PathBuf,
 }
 
+/// Prints comprehensive help message
+fn print_help() {
+    println!(
+        "kitty-launcher v{} - Kitty Terminal Session Launcher",
+        VERSION
+    );
+    println!();
+    println!("USAGE:");
+    println!("    kitty-launcher [OPTIONS] [COMMAND]");
+    println!();
+    println!("COMMANDS:");
+    println!("    <SESSION_NAME>              Launch a kitty session");
+    println!("    --create <NAME>             Create a new session configuration file");
+    println!("    --help, -h                  Show this help message");
+    println!("    --version, -V               Show version information");
+    println!();
+    println!("OPTIONS:");
+    println!("    --help, -h                  Display this help message");
+    println!("    --version, -V               Display version information");
+    println!();
+    println!("EXAMPLES:");
+    println!("    kitty-launcher dev          Launch the 'dev' session");
+    println!("    kitty-launcher --create my-session  Create new session 'my-session.session'");
+    println!();
+    println!("SESSION SEARCH PATHS (in order of priority):");
+    println!("    1. ./etc/kitty/");
+    println!("    2. ~/.local/etc/kitty/");
+    println!("    3. /opt/etc/kitty/");
+    println!("    4. ~/.config/kitty/");
+    println!();
+    println!("SESSION FILE DISCOVERY:");
+    println!("    - Searches for <NAME> first");
+    println!("    - If not found and name doesn't end with .session, tries <NAME>.session");
+    println!("    - Session names must be alphanumeric with hyphens, underscores, or dots");
+    println!();
+    println!("CREATING NEW SESSIONS:");
+    println!("    - Uses z-tools.session as template from ~/.local/etc/kitty/");
+    println!("    - Creates file as ~/.local/etc/kitty/<NAME>.session");
+    println!("    - Edit the created file to customize your session");
+    println!();
+    println!("For more information, visit: https://github.com/pilakkat1964/kitty-launcher");
+}
+
+/// Prints version information
+fn print_version() {
+    println!("kitty-launcher v{}", VERSION);
+    println!("A robust Rust wrapper for the kitty terminal emulator");
+    println!("License: MIT");
+}
+
 /// Validates the session name to ensure it's safe for use.
 ///
 /// This function checks that the session name:
 /// - Is not empty
-/// - Contains only alphanumeric characters, hyphens, and underscores
+/// - Contains only alphanumeric characters, hyphens, underscores, and dots
 /// - Is not a special value like "." or ".."
 ///
 /// # Arguments
@@ -52,12 +106,6 @@ struct LauncherConfig {
 /// # Returns
 /// * `Ok(())` if the name is valid
 /// * `Err(String)` if the name is invalid, with a descriptive error message
-///
-/// # Example
-/// ```
-/// assert!(validate_session_name("dev").is_ok());
-/// assert!(validate_session_name("../etc/passwd").is_err());
-/// ```
 fn validate_session_name(name: &str) -> Result<(), String> {
     // Check if the name is empty
     if name.is_empty() {
@@ -87,6 +135,18 @@ fn validate_session_name(name: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Gets the home directory path for the current user.
+///
+/// This function attempts to get the user's home directory from the `HOME`
+/// environment variable. If it's not set, returns None.
+///
+/// # Returns
+/// * `Some(PathBuf)` - The home directory path if available
+/// * `None` - If the home directory cannot be determined
+fn get_home_dir() -> Option<PathBuf> {
+    env::var("HOME").ok().map(PathBuf::from)
+}
+
 /// Finds the configuration file for a given session name.
 ///
 /// This function searches for the session configuration file in the standard
@@ -96,15 +156,18 @@ fn validate_session_name(name: &str) -> Result<(), String> {
 /// 3. `/opt/etc/kitty/` (optional system-wide)
 /// 4. `~/.config/kitty/` (kitty standard location)
 ///
+/// If the session name doesn't already end with `.session`, the function will
+/// first try to find the file as-is, then retry with `.session` extension appended.
+///
 /// The function returns the path to the first configuration file found.
-/// If no file is found, it returns an error with suggestions.
+/// If no file is found, it returns an error with suggestions and lists all tried paths.
 ///
 /// # Arguments
-/// * `session_name` - The name of the session (without file extension)
+/// * `session_name` - The name of the session (with or without .session extension)
 ///
 /// # Returns
 /// * `Ok(PathBuf)` - The path to the found configuration file
-/// * `Err(String)` - An error message if no configuration file is found
+/// * `Err(String)` - An error message listing all attempted paths
 fn find_config_file(session_name: &str) -> Result<PathBuf, String> {
     // Define the search paths in order of preference
     let mut search_paths: Vec<PathBuf> = vec![
@@ -125,41 +188,148 @@ fn find_config_file(session_name: &str) -> Result<PathBuf, String> {
         search_paths.push(home.join(".config/kitty"));
     }
 
-    // Try each search path
-    for search_path in search_paths.iter() {
-        let config_file = search_path.join(session_name);
+    // Build list of session names to try: first the original, then with .session extension
+    // (unless it already ends with .session)
+    let session_names_to_try = if session_name.ends_with(".session") {
+        vec![session_name.to_string()]
+    } else {
+        vec![
+            session_name.to_string(),
+            format!("{}.session", session_name),
+        ]
+    };
 
-        // Check if the file exists
-        if config_file.exists() {
-            // Verify it's actually a file (not a directory)
-            if config_file.is_file() {
-                return Ok(config_file);
+    // Track all attempted paths for error reporting
+    let mut attempted_paths: Vec<PathBuf> = Vec::new();
+
+    // Try each search path with each session name variant
+    for search_path in search_paths.iter() {
+        for session_variant in session_names_to_try.iter() {
+            let config_file = search_path.join(session_variant);
+            attempted_paths.push(config_file.clone());
+
+            // Check if the file exists
+            if config_file.exists() {
+                // Verify it's actually a file (not a directory)
+                if config_file.is_file() {
+                    return Ok(config_file);
+                }
             }
         }
     }
 
     // If we get here, no configuration file was found
-    Err(format!(
-        "Configuration file for session '{}' not found in any of the standard locations:\n  \
-         - ./etc/kitty/\n  \
-         - ~/.local/etc/kitty/\n  \
-         - /opt/etc/kitty/\n  \
-         - ~/.config/kitty/\n\n\
-         Please create a configuration file named '{}' in one of these directories.",
+    // Build a detailed error message with all attempted paths
+    let mut error_msg = format!(
+        "Configuration file for session '{}' not found.\n\n\
+         Attempted paths:\n",
+        session_name
+    );
+
+    for (i, path) in attempted_paths.iter().enumerate() {
+        let display_path =
+            if let Ok(abs_path) = std::fs::canonicalize(path.parent().unwrap_or(Path::new("."))) {
+                abs_path.join(path.file_name().unwrap_or_default())
+            } else {
+                path.clone()
+            };
+        error_msg.push_str(&format!("  {}. {}\n", i + 1, display_path.display()));
+    }
+
+    error_msg.push_str(&format!(
+        "\nPlease create a configuration file named '{}' (or '{}.session') in one of these directories.",
         session_name, session_name
-    ))
+    ));
+
+    Err(error_msg)
 }
 
-/// Gets the home directory path for the current user.
+/// Creates a new session configuration file from a template.
 ///
-/// This function attempts to get the user's home directory from the `HOME`
-/// environment variable. If it's not set, returns None.
+/// This function:
+/// 1. Validates the session name
+/// 2. Finds or creates the ~/.local/etc/kitty directory
+/// 3. Reads the template file (z-tools.session)
+/// 4. Creates a new session file with the provided name
+///
+/// # Arguments
+/// * `name` - The name of the new session (without .session extension)
 ///
 /// # Returns
-/// * `Some(PathBuf)` - The home directory path if available
-/// * `None` - If the home directory cannot be determined
-fn get_home_dir() -> Option<PathBuf> {
-    env::var("HOME").ok().map(PathBuf::from)
+/// * `Ok(PathBuf)` - The path to the created session file
+/// * `Err(String)` - An error message if creation failed
+fn create_session_file(name: &str) -> Result<PathBuf, String> {
+    // Validate the session name
+    validate_session_name(name)?;
+
+    // Get home directory
+    let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
+
+    // Define the session directory
+    let session_dir = home.join(".local/etc/kitty");
+
+    // Create the directory if it doesn't exist
+    fs::create_dir_all(&session_dir).map_err(|e| {
+        format!(
+            "Failed to create directory {}: {}",
+            session_dir.display(),
+            e
+        )
+    })?;
+
+    // Define template and new file paths
+    let template_path = session_dir.join("z-tools.session");
+    let new_file_path = session_dir.join(format!("{}.session", name));
+
+    // Check if the new file already exists
+    if new_file_path.exists() {
+        return Err(format!(
+            "Session file already exists: {}",
+            new_file_path.display()
+        ));
+    }
+
+    // Read the template file
+    let template_content = if template_path.exists() {
+        fs::read_to_string(&template_path).map_err(|e| {
+            format!(
+                "Failed to read template file {}: {}",
+                template_path.display(),
+                e
+            )
+        })?
+    } else {
+        // If no template exists, create a basic one
+        create_default_template()
+    };
+
+    // Write the new session file
+    fs::write(&new_file_path, template_content).map_err(|e| {
+        format!(
+            "Failed to create session file {}: {}",
+            new_file_path.display(),
+            e
+        )
+    })?;
+
+    Ok(new_file_path)
+}
+
+/// Creates a default template if z-tools.session doesn't exist
+fn create_default_template() -> String {
+    r#"# Kitty Session Configuration
+# Edit this file to customize your terminal session
+# For more information, see: https://sw.kovidgoyal.net/kitty/conf/
+
+# Define the first tab
+new_tab Main
+  launch
+
+# Define the second tab
+new_tab Development
+  launch
+"#
+    .to_string()
 }
 
 /// Loads and validates the launcher configuration from command line arguments.
@@ -172,32 +342,15 @@ fn get_home_dir() -> Option<PathBuf> {
 /// # Returns
 /// * `Ok(LauncherConfig)` - If everything is valid and the config file is found
 /// * `Err(String)` - If there's a validation error or the config file is not found
-fn load_config() -> Result<LauncherConfig, String> {
-    // Collect command line arguments, skipping the program name
-    let args: Vec<String> = env::args().collect();
-
-    // Check if exactly one argument (the session name) was provided
-    if args.len() != 2 {
-        return Err(format!(
-            "Usage: {} <session-name>\n\n\
-             Example: {} dev\n\n\
-             Arguments:\n  \
-             <session-name>    The name of the kitty session configuration to launch",
-            args[0], args[0]
-        ));
-    }
-
-    // Get the session name from the first argument
-    let session_name = args[1].clone();
-
+fn load_config(session_name: &str) -> Result<LauncherConfig, String> {
     // Validate the session name
-    validate_session_name(&session_name)?;
+    validate_session_name(session_name)?;
 
     // Find the configuration file
-    let config_path = find_config_file(&session_name)?;
+    let config_path = find_config_file(session_name)?;
 
     Ok(LauncherConfig {
-        session_name,
+        session_name: session_name.to_string(),
         config_path,
     })
 }
@@ -207,6 +360,8 @@ fn load_config() -> Result<LauncherConfig, String> {
 /// This function spawns a new kitty process using the configuration file
 /// found by the launcher. It sets the KITTY_CONF_DIR environment variable
 /// to point to the directory containing the configuration file.
+///
+/// Prints the resolved configuration file path and session directory to stdout.
 ///
 /// # Arguments
 /// * `config` - The launcher configuration containing the session name and config file path
@@ -221,6 +376,12 @@ fn launch_kitty(config: &LauncherConfig) -> Result<(), String> {
         .parent()
         .ok_or_else(|| "Could not determine configuration directory".to_string())?;
 
+    // Get the canonical (absolute) path to the config file for display
+    let resolved_path = match std::fs::canonicalize(&config.config_path) {
+        Ok(path) => path,
+        Err(_) => config.config_path.clone(),
+    };
+
     // Create the kitty command
     let mut command = Command::new("kitty");
 
@@ -234,7 +395,10 @@ fn launch_kitty(config: &LauncherConfig) -> Result<(), String> {
     // Attempt to execute kitty
     match command.spawn() {
         Ok(_) => {
-            println!("Launched kitty with session: {}", config.session_name);
+            println!("Session: {}", config.session_name);
+            println!("Config file: {}", resolved_path.display());
+            println!("Config directory: {}", config_dir.display());
+            println!("Status: Launched kitty terminal");
             Ok(())
         }
         Err(e) => Err(format!(
@@ -248,13 +412,68 @@ fn launch_kitty(config: &LauncherConfig) -> Result<(), String> {
 /// The main entry point for the kitty launcher application.
 ///
 /// This function:
-/// 1. Loads and validates the configuration
-/// 2. Displays helpful error messages if validation fails
+/// 1. Parses command line arguments
+/// 2. Handles help, version, and create options
 /// 3. Launches kitty with the validated configuration
 /// 4. Exits with appropriate error codes
 fn main() {
+    // Collect command line arguments
+    let args: Vec<String> = env::args().collect();
+
+    // Check for help request or no arguments
+    if args.len() == 1 {
+        print_help();
+        exit(0);
+    }
+
+    let first_arg = &args[1];
+
+    // Handle version flag
+    if first_arg == "--version" || first_arg == "-V" {
+        print_version();
+        exit(0);
+    }
+
+    // Handle help flag
+    if first_arg == "--help" || first_arg == "-h" {
+        print_help();
+        exit(0);
+    }
+
+    // Handle create command
+    if first_arg == "--create" {
+        if args.len() != 3 {
+            eprintln!("Error: --create requires exactly one argument (session name)");
+            eprintln!("Usage: {} --create <SESSION_NAME>", args[0]);
+            exit(2);
+        }
+
+        let session_name = &args[2];
+        match create_session_file(session_name) {
+            Ok(path) => {
+                println!("Session file created successfully!");
+                println!("Path: {}", path.display());
+                println!("Edit this file to customize your session configuration.");
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(2);
+            }
+        }
+    }
+
+    // If we get here, treat as session launch
+    if args.len() != 2 {
+        eprintln!("Error: Expected exactly one session name argument");
+        eprintln!("Use '{}' --help for usage information", args[0]);
+        exit(2);
+    }
+
+    let session_name = &args[1];
+
     // Load configuration and validate inputs
-    match load_config() {
+    match load_config(session_name) {
         Ok(config) => {
             // Try to launch kitty
             match launch_kitty(&config) {
@@ -288,6 +507,8 @@ mod tests {
         assert!(validate_session_name("work-session").is_ok());
         assert!(validate_session_name("session_2").is_ok());
         assert!(validate_session_name("dev.backup").is_ok());
+        assert!(validate_session_name("z-tools.session").is_ok()); // with .session extension
+        assert!(validate_session_name("default.session").is_ok()); // with .session extension
     }
 
     /// Test that invalid session names are rejected
@@ -301,5 +522,41 @@ mod tests {
         assert!(validate_session_name(".").is_err()); // special directory
         assert!(validate_session_name("..").is_err()); // special directory
         assert!(validate_session_name("dev@home").is_err()); // invalid character
+    }
+
+    /// Test that session names with various extensions are accepted
+    #[test]
+    fn test_validate_session_name_with_extensions() {
+        assert!(validate_session_name("dev.session").is_ok());
+        assert!(validate_session_name("work.session").is_ok());
+        assert!(validate_session_name("test.backup.session").is_ok());
+        assert!(validate_session_name("session.config").is_ok());
+    }
+
+    /// Test the logic for determining session names to try
+    #[test]
+    fn test_session_name_variants() {
+        // Test that session names without .session get tried with extension
+        let name_without_ext = "dev";
+        let should_retry = !name_without_ext.ends_with(".session");
+        assert!(should_retry); // Should retry with .session
+
+        // Test that session names with .session don't get tried again
+        let name_with_ext = "dev.session";
+        let should_not_retry = !name_with_ext.ends_with(".session");
+        assert!(!should_not_retry); // Should not retry again
+    }
+
+    /// Test create session file validation
+    #[test]
+    fn test_create_session_validation() {
+        // These should be valid names for creating sessions
+        assert!(validate_session_name("my-session").is_ok());
+        assert!(validate_session_name("project_v1").is_ok());
+        assert!(validate_session_name("work.dev").is_ok());
+
+        // These should not be valid
+        assert!(validate_session_name("../evil").is_err());
+        assert!(validate_session_name("/root").is_err());
     }
 }

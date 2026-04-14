@@ -1,0 +1,383 @@
+INFO: kitty-launcher
+*********************
+
+The kitty-launcher is a robust Rust wrapper for the kitty terminal emulator
+that simplifies launching terminal sessions with flexible configuration presets.
+
+
+File: kitty-launcher.info, Node: Top, Next: Usage, Up: (dir)
+
+kitty-launcher Manual
+*********************
+
+This manual describes kitty-launcher version 0.2.0.
+
+kitty-launcher is a robust Rust wrapper for the kitty terminal emulator that
+allows launching terminal sessions with flexible configuration presets. It
+provides a convenient way to start preconfigured terminal environments with
+custom layouts, working directories, and applications.
+
+* Menu:
+
+* Usage::                   How to use kitty-launcher
+* Session Names::           Session name validation rules
+* File Discovery::          How sessions are discovered
+* Creating Sessions::       How to create new session files
+* Examples::                Usage examples
+* Configuration::           Configuration file locations
+* Exit Codes::              Meaning of exit codes
+* Environment::             Environment variables used
+* Limitations::             Known limitations and workarounds
+
+
+File: kitty-launcher.info, Node: Usage, Next: Session Names, Prev: Top, Up: Top
+
+Usage
+*****
+
+Basic Syntax
+============
+
+   kitty-launcher [OPTIONS] [COMMAND]
+
+
+Options
+=======
+
+ -h, --help       Display help message
+ -V, --version    Display version information
+
+
+Commands
+========
+
+ <SESSION_NAME>
+     Launch a kitty session using the specified session name. The program
+     will search for the session configuration file in multiple standard
+     locations.
+
+ --create <NAME>
+     Create a new session configuration file. Creates a file named
+     <NAME>.session in ~/.local/etc/kitty/ using z-tools.session as a
+     template (if available).
+
+
+File: kitty-launcher.info, Node: Session Names, Next: File Discovery, Prev: Usage, Up: Top
+
+Session Names
+*************
+
+Session Name Validation
+=======================
+
+Session names must follow these rules:
+
+  • Must not be empty
+  • Can contain alphanumeric characters, hyphens (-), underscores (_), and dots (.)
+  • Cannot contain path separators (/ or \)
+  • Cannot be special directory names (. or ..)
+  • Cannot contain special characters
+
+Valid Examples
+==============
+
+   dev
+   work-session
+   project_v1
+   dev.backup
+   z-tools.session
+
+Invalid Examples
+================
+
+   ../evil           (path traversal attempt)
+   /root             (absolute path)
+   dev/session       (contains path separator)
+   dev@home          (contains invalid character)
+   .                 (special directory)
+
+
+File: kitty-launcher.info, Node: File Discovery, Next: Creating Sessions, Prev: Session Names, Up: Top
+
+File Discovery
+**************
+
+Search Paths
+============
+
+The program searches for session configuration files in this order:
+
+  1. ./etc/kitty/                  (current directory, highest priority)
+  2. ~/.local/etc/kitty/           (user home directory)
+  3. /opt/etc/kitty/               (optional system-wide)
+  4. ~/.config/kitty/              (kitty standard location, lowest priority)
+
+
+Extension Auto-appending
+=========================
+
+If a session name doesn't end with .session extension, the program will:
+
+  1. First try to find a file with the exact name provided
+  2. If not found, retry with .session extension appended
+
+Example: Searching for "dev" will try:
+  - dev (exact match)
+  - dev.session (with extension)
+
+In all 4 search directories, for a total of 8 attempted paths.
+
+
+Error Reporting
+===============
+
+When a session is not found, the program displays:
+
+  • The session name that was searched for
+  • All 8 attempted file paths (in order of search priority)
+  • Suggestions on how to create the session file
+  • Clear indication of which directories to use
+
+
+File: kitty-launcher.info, Node: Creating Sessions, Next: Examples, Prev: File Discovery, Up: Top
+
+Creating Sessions
+*****************
+
+Using the --create Command
+===========================
+
+To create a new session configuration file:
+
+   kitty-launcher --create <SESSION_NAME>
+
+This command will:
+
+  1. Create the ~/.local/etc/kitty/ directory if it doesn't exist
+  2. Copy the z-tools.session template (if available)
+  3. Create a new file named <SESSION_NAME>.session
+  4. Display the path to the created file
+
+
+Template Files
+==============
+
+The --create command uses z-tools.session as a template. To customize:
+
+  1. Edit ~/.local/etc/kitty/z-tools.session
+  2. Run kitty-launcher --create with your desired name
+  3. The new session will be created from your customized template
+
+
+Default Template
+================
+
+If no z-tools.session template exists, a basic template will be created with:
+
+  • Main tab
+  • Development tab
+  • Default launch command
+
+
+Editing Sessions
+================
+
+After creating a session file, you can edit it directly:
+
+   $EDITOR ~/.local/etc/kitty/<SESSION_NAME>.session
+
+For session file format documentation, see:
+https://sw.kovidgoyal.net/kitty/conf/
+
+
+File: kitty-launcher.info, Node: Examples, Next: Configuration, Prev: Creating Sessions, Up: Top
+
+Examples
+********
+
+Launch a Session
+================
+
+   kitty-launcher dev
+
+Searches for and launches the dev session (or dev.session).
+
+
+Launch with Explicit Extension
+===============================
+
+   kitty-launcher dev.session
+
+Launches the dev.session file directly.
+
+
+Create a New Session
+====================
+
+   kitty-launcher --create my-project
+
+Creates a new session file at:
+   ~/.local/etc/kitty/my-project.session
+
+
+Display Help
+============
+
+   kitty-launcher --help
+   kitty-launcher -h
+
+Shows comprehensive help message with all options and examples.
+
+
+Display Version
+===============
+
+   kitty-launcher --version
+   kitty-launcher -V
+
+Shows version information and licensing details.
+
+
+File: kitty-launcher.info, Node: Configuration, Next: Exit Codes, Prev: Examples, Up: Top
+
+Configuration
+**************
+
+Configuration File Locations
+=============================
+
+Session configuration files are stored in these locations:
+
+  1. ./etc/kitty/                (project-local sessions)
+  2. ~/.local/etc/kitty/         (user sessions, created by --create)
+  3. /opt/etc/kitty/             (system-wide sessions)
+  4. ~/.config/kitty/            (kitty standard location)
+
+
+Session File Format
+===================
+
+Session files use the kitty session configuration format. Basic example:
+
+   # Define the first tab
+   new_tab Main
+     cd /path/to/project
+     launch
+
+   # Define the second tab
+   new_tab Development
+     launch
+
+
+For complete documentation, see:
+https://sw.kovidgoyal.net/kitty/conf/
+
+
+File: kitty-launcher.info, Node: Exit Codes, Next: Environment, Prev: Configuration, Up: Top
+
+Exit Codes
+**********
+
+Exit Code 0
+===========
+
+Successful execution. Either:
+  • A session was launched successfully
+  • A new session file was created successfully
+
+
+Exit Code 1
+===========
+
+Runtime error. Examples:
+  • kitty terminal not found in PATH
+  • Failed to spawn kitty process
+  • Failed to set environment variables
+
+
+Exit Code 2
+===========
+
+Configuration error. Examples:
+  • Session name failed validation
+  • Configuration file not found
+  • Invalid arguments provided
+
+
+File: kitty-launcher.info, Node: Environment, Next: Limitations, Prev: Exit Codes, Up: Top
+
+Environment Variables
+**********************
+
+HOME
+====
+
+Used to determine the user's home directory for locating configuration files.
+
+   export HOME=/home/username
+
+If not set, the program will fail to locate user-specific configuration
+directories and will not be able to create sessions.
+
+
+KITTY_CONF_DIR
+==============
+
+Set by kitty-launcher before launching kitty to point to the directory
+containing the selected session configuration file.
+
+   KITTY_CONF_DIR=/path/to/config/dir kitty --session /path/to/config
+
+This variable tells kitty where to find its configuration files.
+
+
+File: kitty-launcher.info, Node: Limitations, Prev: Environment, Up: Top
+
+Limitations and Workarounds
+****************************
+
+No Absolute Path Support
+=========================
+
+The current version does not support specifying absolute paths directly
+to prevent security vulnerabilities.
+
+   Workaround: Create symlinks in one of the standard search directories
+   pointing to your configuration files.
+
+
+Limited Template Customization
+===============================
+
+The --create command only supports z-tools.session as a template.
+
+   Workaround: Edit ~/.local/etc/kitty/z-tools.session to customize
+   the default template, then create new sessions.
+
+
+Single Template per System
+==========================
+
+All new sessions created with --create use the same template.
+
+   Workaround: After creating a session, edit the file directly to
+   customize it.
+
+
+Future Enhancements
+===================
+
+Planned features for future versions:
+
+  • Support for multiple templates via --template option
+  • Support for absolute paths with --config option
+  • Session file deletion with --delete option
+  • Session list command with --list option
+  • Import/export functionality
+
+
+Reporting Issues
+================
+
+For bug reports and feature requests:
+https://github.com/pilakkat1964/kitty-launcher/issues

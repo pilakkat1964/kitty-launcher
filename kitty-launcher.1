@@ -1,0 +1,241 @@
+.TH KITTY-LAUNCHER 1 "April 2026" "kitty-launcher 0.2.0" "User Commands"
+.SH NAME
+kitty-launcher \- Robust wrapper for launching kitty terminal sessions
+
+.SH SYNOPSIS
+.B kitty-launcher
+[\fIOPTIONS\fR] [\fICOMMAND\fR]
+
+.SH DESCRIPTION
+.B kitty-launcher
+is a robust Rust wrapper for the kitty terminal emulator that allows launching
+terminal sessions with flexible configuration presets. It provides a convenient
+way to start preconfigured terminal environments with custom layouts, working
+directories, and applications.
+
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Display this help message and exit.
+
+.TP
+.B \-V, \-\-version
+Display version information and exit.
+
+.SH COMMANDS
+.TP
+.B <SESSION_NAME>
+Launch a kitty session using the specified session name. The program searches for
+configuration files in the following order:
+.RS
+.IP 1. 3
+./etc/kitty/ (current directory, highest priority)
+.IP 2. 3
+~/.local/etc/kitty/ (user home directory)
+.IP 3. 3
+/opt/etc/kitty/ (optional system-wide)
+.IP 4. 3
+~/.config/kitty/ (kitty standard location, lowest priority)
+.RE
+
+If the session name doesn't already end with
+.B .session
+extension, the program will first try to find the file as-is, then retry with
+.B .session
+extension appended.
+
+.TP
+.B \-\-create <NAME>
+Create a new session configuration file. The program will:
+.RS
+.IP 1. 3
+Create the ~/.local/etc/kitty/ directory if it doesn't exist
+.IP 2. 3
+Copy the z-tools.session template file (if it exists)
+.IP 3. 3
+Create a new file named <NAME>.session in ~/.local/etc/kitty/
+.RE
+
+If no template file is available, a basic template will be created. The created
+file can then be edited to customize the session configuration.
+
+.SH SESSION SEARCH BEHAVIOR
+The program implements smart session file discovery with the following features:
+
+.TP
+.B Extension Auto-appending
+If a session name doesn't end with
+.B .session
+extension, the program will first search for the exact name, then retry with
+.B .session
+appended. For example, searching for "dev" will try:
+.RS
+.IP • 3
+dev (exact match)
+.IP • 3
+dev.session (with extension)
+.RE
+
+.TP
+.B Absolute Path Resolution
+On success, the program prints the absolute path to the resolved configuration
+file, allowing users to verify which configuration was loaded.
+
+.TP
+.B Detailed Error Reporting
+On failure, the program lists all attempted file paths (in order of search
+priority), making debugging configuration issues much easier.
+
+.SH SESSION NAME VALIDATION
+Session names must follow these rules:
+.IP • 3
+Must not be empty
+.IP • 3
+Can contain alphanumeric characters, hyphens (\-), underscores (_), and dots (.)
+.IP • 3
+Cannot contain path separators (/ or \e)
+.IP • 3
+Cannot be special directory names (. or ..)
+.IP • 3
+Cannot contain special characters (@, #, $, etc.)
+
+Examples of valid session names:
+.RS
+dev, work-session, project_v1, dev.backup, z-tools.session
+.RE
+
+Examples of invalid session names:
+.RS
+../evil, /root, dev/session, dev@home
+.RE
+
+.SH SESSION FILE FORMAT
+Session files use the kitty session configuration format. For complete documentation,
+see the kitty documentation at https://sw.kovidgoyal.net/kitty/conf/
+
+Basic example of a session file:
+.RS
+.nf
+# Define the first tab
+new_tab Main
+  cd /path/to/project
+  launch
+
+# Define the second tab
+new_tab Development
+  launch
+.fi
+.RE
+
+.SH CONFIGURATION FILE CREATION
+When creating a new session with
+.B \-\-create
+option, the program uses z-tools.session as a template. This template should be
+located at ~/.local/etc/kitty/z-tools.session. If no template exists, a basic
+template will be used.
+
+To customize the template:
+.IP 1. 3
+Edit ~/.local/etc/kitty/z-tools.session
+.IP 2. 3
+Run
+.B kitty-launcher \-\-create <name>
+to create new sessions based on your customized template
+
+.SH EXIT CODES
+.TP
+.B 0
+Successful execution (session launched or file created successfully)
+
+.TP
+.B 1
+Runtime error (e.g., kitty not found, failed to launch terminal)
+
+.TP
+.B 2
+Configuration error (e.g., invalid session name, config file not found)
+
+.SH EXAMPLES
+.TP
+Launch a session named "dev":
+.B kitty-launcher dev
+
+.TP
+Launch a session with explicit .session extension:
+.B kitty-launcher dev.session
+
+.TP
+Create a new session configuration file:
+.B kitty-launcher \-\-create my-project
+
+.TP
+Display help message:
+.B kitty-launcher \-\-help
+
+.TP
+Display version information:
+.B kitty-launcher \-\-version
+
+.SH ENVIRONMENT VARIABLES
+.TP
+.B HOME
+Used to determine the user's home directory for finding configuration files.
+If not set, the program will fail to locate user-specific configuration directories.
+
+.TP
+.B KITTY_CONF_DIR
+Set by kitty-launcher to point to the directory containing the selected session
+configuration file. This environment variable is used by the kitty terminal to
+locate its configuration.
+
+.SH FILES
+.TP
+.B ./etc/kitty/
+Current directory session configurations (highest priority)
+
+.TP
+.B ~/.local/etc/kitty/
+User session configurations (created with \-\-create option)
+
+.TP
+.B /opt/etc/kitty/
+Optional system-wide session configurations
+
+.TP
+.B ~/.config/kitty/
+Kitty standard configuration directory (lowest priority)
+
+.SH NOTES
+.IP • 3
+All session configuration files should have the
+.B .session
+extension. However, due to the extension auto-appending feature, you can omit
+the extension when launching sessions.
+
+.IP • 3
+The program performs comprehensive input validation to prevent path traversal
+attacks and shell injection vulnerabilities.
+
+.IP • 3
+Session names are case-sensitive on Unix-like systems.
+
+.IP • 3
+The program maintains backward compatibility with existing session configurations.
+
+.SH SEE ALSO
+.B kitty(1)
+\- The kitty terminal emulator documentation
+
+.BR https://sw.kovidgoyal.net/kitty/conf/ " \- Kitty configuration reference"
+
+.BR https://github.com/pilakkat1964/kitty-launcher " \- Project repository"
+
+.SH AUTHOR
+Created as a learning vehicle for Rust programming language.
+
+.SH LICENSE
+MIT License
+
+.SH REPORTING BUGS
+For bug reports and feature requests, visit:
+https://github.com/pilakkat1964/kitty-launcher/issues
