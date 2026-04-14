@@ -39,6 +39,9 @@ kitty-launcher -c dev
 # Edit it to customize
 $EDITOR ~/.local/etc/kitty/sessions/dev.session
 
+# Or launch from project directory to use local ./kitty/sessions/
+# Create local session: mkdir -p ./kitty/sessions && kitty-launcher -c mylocal
+
 # Launch it anytime
 kitty-launcher dev
 ```
@@ -215,8 +218,9 @@ kitty-launcher -l "💾 Data" databases
 kitty-launcher -l "📊 Monitor" monitoring
 
 # Add to version control for team
-# .local/share/applications/kitty-launcher-*.desktop
+# .local/etc/kitty/launchers/kitty-launcher-*.desktop
 # .local/etc/kitty/sessions/*.session
+# Or ./kitty/sessions/*.session for project-local sessions
 ```
 
 **Team Benefit**: New developers clone repo → run scripts to create launchers → have same environment as team lead. Zero setup friction.
@@ -256,6 +260,32 @@ To expose launchers to your application menu, use:
 kitty-launcher --install <LAUNCHER_NAME>
 ```
 This creates a symlink in `~/.local/share/applications/` for system integration.
+
+### Local Project Sessions with Working Directory
+
+You can create project-local sessions by storing them in `./kitty/sessions/` and using the `--path` option to set the working directory for desktop launchers:
+
+```bash
+# In your project root, create a local session directory
+mkdir -p ./kitty/sessions
+echo "new_window
+  launch
+" > ./kitty/sessions/dev.session
+
+# Create a desktop launcher that starts from the project directory
+kitty-launcher -l "Project Dev" dev --path /path/to/project
+
+# Or use relative path (expands with shell)
+kitty-launcher -l "Project Dev" dev --path ~/path/to/project
+```
+
+When you click this launcher from your desktop:
+1. The launcher starts in the specified working directory
+2. Kitty-launcher searches for sessions in `./kitty/sessions/` first
+3. Finds the local session and launches it
+4. Your terminal starts with the project context
+
+This enables graphical launching of project-specific terminal environments.
 
 #### Step 3: Create Folder View on Desktop
 
@@ -452,7 +482,13 @@ fi
 
 ### Session Configuration
 
-Sessions are stored in: `~/.local/etc/kitty/sessions/`
+Sessions are searched in this order (first match wins):
+1. `./kitty/sessions/` (project-local, shallowest for easy discovery)
+2. `~/.local/etc/kitty/sessions/` (user-level)
+3. `/opt/etc/kitty/sessions/` (system-wide optional)
+4. `~/.config/kitty/sessions/` (kitty standard location)
+
+This priority order enables flexible session organization from project-local to system-wide.
 
 Example session file (`dev.session`):
 

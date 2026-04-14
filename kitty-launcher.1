@@ -1,4 +1,4 @@
-.TH KITTY-LAUNCHER 1 "April 2026" "kitty-launcher 0.3.0" "User Commands"
+.TH KITTY-LAUNCHER 1 "April 2026" "kitty-launcher 0.5.0" "User Commands"
 .SH NAME
 kitty-launcher \- Robust wrapper for launching kitty terminal sessions
 
@@ -29,7 +29,7 @@ Launch a kitty session using the specified session name. The program searches fo
 configuration files in the following order:
 .RS
 .IP 1. 3
-./etc/kitty/sessions/ (current directory, highest priority)
+./kitty/sessions/ (current directory, highest priority)
 .IP 2. 3
 ~/.local/etc/kitty/sessions/ (user home directory)
 .IP 3. 3
@@ -75,6 +75,17 @@ Save the .desktop file in the launchers directory
 The created .desktop file is stored locally for organization. If SESSION_NAME is
 omitted, LAUNCHER_NAME is used as the session. To expose a launcher to the
 application menu, use the --install command.
+
+.TP
+.B \-\-path <DIRECTORY>
+(Used with -l/--create-launcher) Set the working directory for the launcher.
+When specified, the .desktop file will include a working directory path, causing
+the launcher to start in that directory. This enables finding local sessions
+stored in ./kitty/sessions/ when launching graphically from the desktop.
+
+Example: kitty-launcher -l "Project" dev --path ~/myproject
+
+This allows graphical launching of project-specific terminal environments.
 
 .TP
 .B \-\-install <LAUNCHER_NAME>
@@ -210,6 +221,9 @@ Create a launcher for the dev session (long form):
 .B kitty-launcher --create-launcher dev dev
 
 .TP
+Create a launcher with working directory for local sessions:
+.B kitty-launcher -l "Project" dev --path ~/myproject
+
 .TP
 Display help message (short form):
 .B kitty-launcher -h
@@ -282,12 +296,16 @@ locate its configuration.
 
 .SH FILES
 .TP
-.B ./etc/kitty/
-Current directory session configurations (highest priority)
+.B ./kitty/sessions/
+Current directory session configurations (highest priority for project-local sessions)
 
 .TP
 .B ~/.local/etc/kitty/sessions/
 User session configurations (created with \-\-create option)
+
+.TP
+.B ~/.local/etc/kitty/launchers/
+Launcher .desktop files (created with \-\-create-launcher option)
 
 .TP
 .B /opt/etc/kitty/sessions/

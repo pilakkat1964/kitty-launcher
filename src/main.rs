@@ -63,6 +63,7 @@ fn print_help() {
     println!("    <SESSION_NAME>                              Launch a kitty session");
     println!("    -c, --create <NAME>                         Create a session template file");
     println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
+    println!("    --path <DIR>                                (with -l) Set working directory for launcher");
     println!("    --install <LAUNCHER_NAME>                   Add launcher to application menu");
     println!(
         "    --generate-completions <SHELL>              Generate shell completions (bash|zsh)"
@@ -85,8 +86,11 @@ fn print_help() {
     println!("    # Create a launcher file for GUI access");
     println!("    kitty-launcher -l 'My Session' my-session");
     println!();
+    println!("    # Create launcher with working directory (for local sessions)");
+    println!("    kitty-launcher -l 'Project' dev --path /path/to/project");
+    println!();
     println!("SESSION SEARCH PATHS (in order of priority):");
-    println!("    1. ./etc/kitty/sessions/");
+    println!("    1. ./kitty/sessions/");
     println!("    2. ~/.local/etc/kitty/sessions/");
     println!("    3. /opt/etc/kitty/sessions/");
     println!("    4. ~/.config/kitty/sessions/");
@@ -106,6 +110,11 @@ fn print_help() {
     println!("    kitty-launcher -l <LAUNCHER_NAME> [SESSION] generates a .desktop file.");
     println!("    If SESSION is omitted, <LAUNCHER_NAME> is used as the session name.");
     println!("    Files are created in ~/.local/etc/kitty/launchers/ by default.");
+    println!();
+    println!("    Use --path to set working directory for launching local sessions:");
+    println!("    kitty-launcher -l <LAUNCHER_NAME> <SESSION> --path /path/to/project");
+    println!();
+    println!("    This enables ./kitty/sessions/ to be found when launching graphically.");
     println!();
     println!("    To expose a launcher to the application menu, use:");
     println!("    kitty-launcher --install <LAUNCHER_NAME>");
@@ -183,7 +192,7 @@ fn get_home_dir() -> Option<PathBuf> {
 ///
 /// This function searches for the session configuration file in the standard
 /// locations in the following order:
-/// 1. `./etc/kitty/sessions/` (current directory)
+/// 1. `./kitty/sessions/` (current directory - shallowest nesting for local projects)
 /// 2. `~/.local/etc/kitty/sessions/` (user home directory)
 /// 3. `/opt/etc/kitty/sessions/` (optional system-wide)
 /// 4. `~/.config/kitty/sessions/` (kitty standard location)
@@ -202,11 +211,11 @@ fn get_home_dir() -> Option<PathBuf> {
 /// * `Err(String)` - An error message listing all attempted paths
 fn find_config_file(session_name: &str) -> Result<PathBuf, String> {
     // Define the search paths in order of preference
-    // Sessions are stored in a dedicated ./sessions subfolder to avoid
-    // conflicts with kitty's own configuration files
+    // Sessions are stored in a dedicated ./kitty/sessions subfolder to avoid
+    // conflicts with kitty's own configuration files and reduce nesting depth
     let mut search_paths: Vec<PathBuf> = vec![
-        // Current directory (highest priority)
-        PathBuf::from("./etc/kitty/sessions"),
+        // Current directory (highest priority, shallow nesting for local projects)
+        PathBuf::from("./kitty/sessions"),
     ];
 
     // Add user's local configuration directory if home dir is available
@@ -370,21 +379,29 @@ new_tab Development
 ///
 /// This function:
 /// 1. Validates the launcher name (same rules as session names)
-/// 2. Creates ~/.local/share/applications directory if needed
+/// 2. Creates ~/.local/etc/kitty/launchers directory if needed
 /// 3. Generates a standard .desktop file for the session
-/// 4. Saves the .desktop file in the applications directory
+/// 4. Includes optional working directory for finding local sessions
+/// 5. Saves the .desktop file in the launchers directory
 ///
 /// The .desktop file can be used by desktop environments to add the launcher
-/// to application menus and allow quick access to the session.
+/// to application menus and allow quick access to the session. If a working
+/// directory is specified, the launcher will start in that directory, allowing
+/// it to find local sessions in ./kitty/sessions/
 ///
 /// # Arguments
 /// * `name` - The name for the launcher (e.g., "dev", "work-session")
 /// * `session_name` - The session configuration to launch
+/// * `working_dir` - Optional working directory where to start the launcher
 ///
 /// # Returns
 /// * `Ok(PathBuf)` - Path to the created .desktop file
 /// * `Err(String)` - Error description if creation fails
-fn create_launcher_file(name: &str, session_name: &str) -> Result<PathBuf, String> {
+fn create_launcher_file(
+    name: &str,
+    session_name: &str,
+    working_dir: Option<&str>,
+) -> Result<PathBuf, String> {
     // Validate both launcher name and session name
     validate_session_name(name)?;
     validate_session_name(session_name)?;
@@ -416,8 +433,40 @@ fn create_launcher_file(name: &str, session_name: &str) -> Result<PathBuf, Strin
     }
 
     // Generate the .desktop file content
-    let desktop_content = format!(
-        r#"[Desktop Entry]
+    let desktop_content = if let Some(work_dir) = working_dir {
+        // Validate that working_dir doesn't contain path traversal attacks
+        if work_dir.contains("..") || work_dir.contains("//") {
+            return Err("Invalid working directory: contains path traversal patterns".to_string());
+        }
+        // Expand tilde if present
+        let expanded_dir = if work_dir.starts_with("~") {
+            home.join(&work_dir[2..]).to_string_lossy().to_string()
+        } else if work_dir.starts_with("/") {
+            work_dir.to_string()
+        } else {
+            // Relative paths are kept as-is (can be expanded by shell)
+            work_dir.to_string()
+        };
+
+        format!(
+            r#"[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kitty: {}
+Comment=Launch kitty terminal with {} session
+Exec=kitty-launcher {}
+Path={}
+Icon=kitty
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true
+MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh;
+"#,
+            name, session_name, session_name, expanded_dir
+        )
+    } else {
+        format!(
+            r#"[Desktop Entry]
 Type=Application
 Version=1.0
 Name=Kitty: {}
@@ -429,8 +478,9 @@ Categories=System;TerminalEmulator;
 StartupNotify=true
 MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh;
 "#,
-        name, session_name, session_name
-    );
+            name, session_name, session_name
+        )
+    };
 
     // Write the .desktop file
     fs::write(&desktop_file_path, desktop_content).map_err(|e| {
@@ -734,32 +784,55 @@ fn main() {
 
     // Handle create-launcher command (both --create-launcher and -l)
     // Now accepts optional session name: if omitted, uses launcher name as session
+    // Also accepts optional working directory with --path flag
     if first_arg == "--create-launcher" || first_arg == "-l" {
-        if args.len() < 3 || args.len() > 4 {
-            eprintln!("Error: {} requires one or two arguments", first_arg);
+        // Parse arguments: <LAUNCHER_NAME> [SESSION_NAME] [--path WORK_DIR]
+        if args.len() < 3 {
+            eprintln!("Error: {} requires at least one argument", first_arg);
             eprintln!(
-                "Usage: {} {} <LAUNCHER_NAME> [SESSION_NAME]",
+                "Usage: {} {} <LAUNCHER_NAME> [SESSION_NAME] [--path WORK_DIR]",
                 args[0], first_arg
             );
             eprintln!();
             eprintln!("If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.");
+            eprintln!("If --path is specified, the launcher will start from that directory.");
             exit(2);
         }
 
         let launcher_name = &args[2];
-        // If session name is provided, use it; otherwise use launcher name
-        let session_name = if args.len() == 4 {
-            &args[3]
-        } else {
-            launcher_name
-        };
+        let mut session_name = launcher_name.to_string();
+        let mut working_dir: Option<String> = None;
 
-        match create_launcher_file(launcher_name, session_name) {
+        // Parse remaining arguments
+        let mut i = 3;
+        while i < args.len() {
+            if args[i] == "--path" {
+                // Next argument should be the path
+                if i + 1 >= args.len() {
+                    eprintln!("Error: --path requires an argument");
+                    exit(2);
+                }
+                working_dir = Some(args[i + 1].clone());
+                i += 2;
+            } else if !args[i].starts_with("--") && i == 3 {
+                // First non-flag argument is session name
+                session_name = args[i].clone();
+                i += 1;
+            } else {
+                eprintln!("Error: Unknown argument: {}", args[i]);
+                exit(2);
+            }
+        }
+
+        match create_launcher_file(launcher_name, &session_name, working_dir.as_deref()) {
             Ok(path) => {
                 println!("Launcher file created successfully!");
                 println!("Path: {}", path.display());
                 println!("Launcher name: {}", launcher_name);
                 println!("Session: {}", session_name);
+                if let Some(wd) = working_dir {
+                    println!("Working directory: {}", wd);
+                }
                 println!();
                 println!("To add this launcher to your application menu, run:");
                 println!("  kitty-launcher --install {}", launcher_name);
