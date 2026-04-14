@@ -155,6 +155,8 @@ git tag -l             # ✓ v0.1.0, v0.2.0, v0.3.0, v0.4.0
 
 ## Build & Test
 
+### Build & Test
+
 ### Build Release Binary
 ```bash
 cd /home/sysadmin/workspace/Opencode-workspaces/z-tools/kitty-launcher
@@ -177,11 +179,28 @@ cargo test
 - `test_create_launcher_validation` ✓
 - `test_desktop_file_content` ✓
 
-### Build Debian Package
+### Build Debian Package (AMD64 only)
 ```bash
 ./scripts/build-deb.sh --clean
 # Output: kitty-launcher_0.4.0-1_amd64.deb
 ```
+
+### GitHub Actions - Multi-Architecture Builds
+- **Workflow**: `.github/workflows/release.yml`
+- **Trigger**: Tag push (v*)
+- **Build Matrix**:
+  - AMD64 (x86_64-unknown-linux-gnu) - Native build with cargo
+  - ARM64 (aarch64-unknown-linux-gnu) - Cross-compilation with `cross` crate
+- **Outputs**:
+  - Precompiled binary for AMD64
+  - Debian packages for AMD64 and ARM64
+  - Source archive (tar.gz)
+- **Permissions**: Write access to GitHub repository (for release creation)
+- **Features**:
+  - Automatic .deb package generation with shell completions
+  - Binary stripping for optimized size
+  - Release notes with installation instructions
+  - Artifact retention: 1 day
 
 ---
 
@@ -274,6 +293,24 @@ kitty-launcher --generate-completions zsh >> ~/.zshrc
 
 ### Installation Methods
 
+#### From Debian Package (Recommended)
+**AMD64 Systems:**
+```bash
+sudo dpkg -i kitty-launcher_0.4.1-1_amd64.deb
+```
+
+**ARM64 Systems (Raspberry Pi, etc.):**
+```bash
+sudo dpkg -i kitty-launcher_0.4.1-1_arm64.deb
+```
+
+#### From Precompiled Binary
+```bash
+wget https://github.com/pilakkat1964/kitty-launcher/releases/download/v0.4.1/kitty-launcher-v0.4.1-linux-amd64
+chmod +x kitty-launcher-v0.4.1-linux-amd64
+sudo cp kitty-launcher-v0.4.1-linux-amd64 /usr/local/bin/kitty-launcher
+```
+
 #### From Source
 ```bash
 git clone git@github.com:pilakkat1964/kitty-launcher.git
@@ -282,16 +319,20 @@ cargo build --release
 sudo cp target/release/kitty-launcher /usr/local/bin/
 ```
 
-#### From Debian Package
-```bash
-sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
-```
-
 #### Using Build Scripts
 ```bash
 ./scripts/build.sh --release --test
 ./scripts/build-deb.sh --clean
 ```
+
+### Release Assets (GitHub)
+Each version release includes:
+- **Precompiled Binary**: `kitty-launcher-v*.tar.gz` - Source archive
+- **Debian Package (AMD64)**: `kitty-launcher_*-1_amd64.deb` - Ready to install
+- **Debian Package (ARM64)**: `kitty-launcher_*-1_arm64.deb` - For ARM systems
+- **Source Archive**: `kitty-launcher-v*.tar.gz` - Full source code
+
+**Repository**: https://github.com/pilakkat1964/kitty-launcher/releases
 
 ---
 
@@ -327,9 +368,15 @@ sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
 - **All features implemented** and working
 - **All tests passing** (7/7)
 - **All code pushed** to GitHub via SSH
-- **All tags created** (v0.1.0 through v0.4.0)
+- **All tags created** (v0.1.0 through v0.4.0, v0.4.1 test release)
 - **Clean working directory** with no uncommitted changes
 - **Repository synchronized** with remote
+- **GitHub Actions Workflow**: Multi-architecture builds fully operational
+  - ✅ AMD64 builds working (native compilation)
+  - ✅ ARM64 builds working (cross-compilation)
+  - ✅ Debian package generation for both architectures
+  - ✅ Binary release assets included
+  - ✅ Release notes with installation instructions
 
 ### To Resume Later
 1. Navigate to: `/home/sysadmin/workspace/Opencode-workspaces/z-tools/kitty-launcher`
@@ -355,6 +402,6 @@ sudo dpkg -i kitty-launcher_0.4.0-1_amd64.deb
 
 ---
 
-**Status Summary**: ✅ Production-ready. All requirements met. SSH+Git operational. Ready for continued development, deployment, and distribution.
+**Status Summary**: ✅ Production-ready. Multi-architecture GitHub Actions workflow operational. All requirements met. SSH+Git operational. Ready for continued development, deployment, and distribution.
 
-**Last Updated**: April 14, 2026 (Session completion after v0.4.0 shell completions feature)
+**Last Updated**: April 14, 2026 (Multi-architecture Debian package builds via GitHub Actions)
