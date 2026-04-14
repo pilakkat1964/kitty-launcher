@@ -63,11 +63,15 @@ Commands
       <NAME>.session in ~/.local/etc/kitty/sessions/ using z-tools.session as a
       template (if available).
 
- -l, --create-launcher <LAUNCHER_NAME> [SESSION_NAME]
-     Create a .desktop launcher file for launching a session from application
-      menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.
-      Creates a file named kitty-launcher-<LAUNCHER_NAME>.desktop in
-      ~/.local/share/applications/.
+  -l, --create-launcher <LAUNCHER_NAME> [SESSION_NAME]
+      Create a .desktop launcher file for launching a session. If SESSION_NAME
+      is omitted, LAUNCHER_NAME is used as the session. Creates a file named
+      kitty-launcher-<LAUNCHER_NAME>.desktop in ~/.local/etc/kitty/launchers/.
+
+ --install <LAUNCHER_NAME>
+      Add a launcher to the application menu by creating a symlink in
+      ~/.local/share/applications/. This enables the launcher to appear in your
+      desktop environment's application menu.
 
 
 File: kitty-launcher.info, Node: Session Names, Next: File Discovery, Prev: Usage, Up: Top
@@ -206,9 +210,9 @@ Creating Launchers
 Desktop Application Integration
 ================================
 
-kitty-launcher can create .desktop files that integrate with your desktop
-environment's application menu. This allows you to launch sessions directly
-from your system menu without opening a terminal.
+kitty-launcher can create .desktop files that you can use with your desktop
+environment's file manager or expose to the application menu for convenient
+access.
 
 
 Using the --create-launcher Command
@@ -220,19 +224,36 @@ To create a launcher for a session:
 
 This command will:
 
-   1. Create ~/.local/share/applications/ directory if it doesn't exist
+   1. Create ~/.local/etc/kitty/launchers/ directory if it doesn't exist
    2. Generate a .desktop file named kitty-launcher-<LAUNCHER_NAME>.desktop
-   3. Register the launcher in your desktop environment
+   3. Store the file in the launchers directory for organization
+
+
+Using the --install Command
+============================
+
+To expose a launcher to your application menu:
+
+   kitty-launcher --install <LAUNCHER_NAME>
+
+This command will:
+
+   1. Create a symlink in ~/.local/share/applications/
+   2. The launcher now appears in your desktop environment's application menu
 
 
 Example: Creating a Launcher
 =============================
 
-To create a launcher named "dev-env" for the "dev" session:
+ To create a launcher named "dev-env" for the "dev" session:
 
-   kitty-launcher --create-launcher dev-env dev
+    kitty-launcher --create-launcher dev-env dev
 
-This creates: ~/.local/share/applications/kitty-launcher-dev-env.desktop
+This creates: ~/.local/etc/kitty/launchers/kitty-launcher-dev-env.desktop
+
+To add it to your application menu:
+
+    kitty-launcher --install dev-env
 
 
 
@@ -252,7 +273,7 @@ Desktop Entry Files
 ===================
 
 The .desktop files created follow the FreeDesktop.org Desktop Entry specification.
-You can manually edit files at: ~/.local/share/applications/
+You can manually edit files at: ~/.local/etc/kitty/launchers/
 
 Example .desktop file structure:
 
@@ -309,12 +330,13 @@ With launcher name and session name (long form):
    kitty-launcher --create-launcher dev-env dev
 
 With launcher name only (uses it as session):
-   kitty-launcher -l myapp
+    kitty-launcher -l myapp
 
 Creates a .desktop launcher file at:
-   ~/.local/share/applications/kitty-launcher-dev-env.desktop
+    ~/.local/etc/kitty/launchers/kitty-launcher-dev-env.desktop
 
-You can now launch this session from your desktop application menu.
+To add to application menu:
+    kitty-launcher --install dev-env
 
 
 Install System Launcher
@@ -442,7 +464,7 @@ Combine with folder view widget for visual environment access:
       kitty-launcher -l "Staging" staging
       kitty-launcher -l "Production" production
 
-2. Add folder view to desktop: ~/.local/share/applications/
+2. Add folder view to desktop: ~/.local/etc/kitty/launchers/
 
 3. Hover over folder → cascading menu shows all launchers
 

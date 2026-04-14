@@ -63,6 +63,7 @@ fn print_help() {
     println!("    <SESSION_NAME>                              Launch a kitty session");
     println!("    -c, --create <NAME>                         Create a session template file");
     println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
+    println!("    --install <LAUNCHER_NAME>                   Add launcher to application menu");
     println!(
         "    --generate-completions <SHELL>              Generate shell completions (bash|zsh)"
     );
@@ -104,7 +105,11 @@ fn print_help() {
     println!("CREATING LAUNCHER FILES:");
     println!("    kitty-launcher -l <LAUNCHER_NAME> [SESSION] generates a .desktop file.");
     println!("    If SESSION is omitted, <LAUNCHER_NAME> is used as the session name.");
-    println!("    Files are created in ~/.local/share/applications/ for desktop access.");
+    println!("    Files are created in ~/.local/etc/kitty/launchers/ by default.");
+    println!();
+    println!("    To expose a launcher to the application menu, use:");
+    println!("    kitty-launcher --install <LAUNCHER_NAME>");
+    println!("    This creates a symlink in ~/.local/share/applications/.");
     println!();
     println!("SHELL COMPLETIONS:");
     println!("    bash:  kitty-launcher --generate-completions bash >> ~/.bashrc");
@@ -387,15 +392,20 @@ fn create_launcher_file(name: &str, session_name: &str) -> Result<PathBuf, Strin
     // Get home directory
     let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
 
-    // Define the applications directory
-    let apps_dir = home.join(".local/share/applications");
+    // Define the launchers directory (isolated from app menu by default)
+    let launchers_dir = home.join(".local/etc/kitty/launchers");
 
     // Create the directory if it doesn't exist
-    fs::create_dir_all(&apps_dir)
-        .map_err(|e| format!("Failed to create directory {}: {}", apps_dir.display(), e))?;
+    fs::create_dir_all(&launchers_dir).map_err(|e| {
+        format!(
+            "Failed to create directory {}: {}",
+            launchers_dir.display(),
+            e
+        )
+    })?;
 
     // Define the .desktop file path
-    let desktop_file_path = apps_dir.join(format!("kitty-launcher-{}.desktop", name));
+    let desktop_file_path = launchers_dir.join(format!("kitty-launcher-{}.desktop", name));
 
     // Check if the .desktop file already exists
     if desktop_file_path.exists() {
@@ -432,6 +442,56 @@ MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh
     })?;
 
     Ok(desktop_file_path)
+}
+
+/// Creates a symbolic link from a launcher file to the system applications directory.
+///
+/// This function enables a launcher to appear in the application menu by creating
+/// a symlink from ~/.local/etc/kitty/launchers/<file> to ~/.local/share/applications/.
+///
+/// # Arguments
+/// * `launcher_name` - The name of the launcher (without .desktop extension)
+///
+/// # Returns
+/// * `Ok(PathBuf)` - The path to the created symlink
+/// * `Err(String)` - An error message if installation failed
+fn install_launcher_symlink(launcher_name: &str) -> Result<PathBuf, String> {
+    use std::os::unix::fs as unix_fs;
+
+    // Get home directory
+    let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
+
+    // Define source and target paths
+    let launcher_file = format!("kitty-launcher-{}.desktop", launcher_name);
+    let source_path = home.join(".local/etc/kitty/launchers").join(&launcher_file);
+    let apps_dir = home.join(".local/share/applications");
+    let symlink_path = apps_dir.join(&launcher_file);
+
+    // Check if source file exists
+    if !source_path.exists() {
+        return Err(format!(
+            "Launcher file not found: {}",
+            source_path.display()
+        ));
+    }
+
+    // Create applications directory if it doesn't exist
+    fs::create_dir_all(&apps_dir)
+        .map_err(|e| format!("Failed to create directory {}: {}", apps_dir.display(), e))?;
+
+    // Check if symlink already exists
+    if symlink_path.exists() || symlink_path.is_symlink() {
+        return Err(format!(
+            "Symlink already exists: {}",
+            symlink_path.display()
+        ));
+    }
+
+    // Create the symlink
+    unix_fs::symlink(&source_path, &symlink_path)
+        .map_err(|e| format!("Failed to create symlink {}: {}", symlink_path.display(), e))?;
+
+    Ok(symlink_path)
 }
 
 /// Loads and validates the launcher configuration from command line arguments.
@@ -531,14 +591,17 @@ _kitty_launcher_complete() {
     # Handle options and commands
     if [[ $COMP_CWORD -eq 1 ]]; then
         # First argument: commands and sessions
-        local commands="--help --version --create --create-launcher --generate-completions -h -V -c -l"
+        local commands="--help --version --create --create-launcher --install --generate-completions -h -V -c -l"
         COMPREPLY=( $(compgen -W "${commands} ${sessions}" -- "$cur") )
-    elif [[ "$prev" == "--create" ]] || [[ "$prev" == "-c" ]]; then
+     elif [[ "$prev" == "--create" ]] || [[ "$prev" == "-c" ]]; then
         # After --create or -c: no completion (user enters new session name)
         COMPREPLY=()
     elif [[ "$prev" == "--create-launcher" ]] || [[ "$prev" == "-l" ]]; then
         # After --create-launcher: can complete with sessions or user enters launcher name
         COMPREPLY=( $(compgen -W "${sessions}" -- "$cur") )
+    elif [[ "$prev" == "--install" ]]; then
+        # After --install: no completion (user enters launcher name to install)
+        COMPREPLY=()
     elif [[ "$prev" == "--generate-completions" ]]; then
         # After --generate-completions: offer bash and zsh
         COMPREPLY=( $(compgen -W "bash zsh" -- "$cur") )
@@ -565,10 +628,11 @@ _kitty_launcher() {
     fi
     
     commands=(
-        '--help:Show help message'
+         '--help:Show help message'
         '--version:Show version information'
         '--create:Create a new session configuration file'
         '--create-launcher:Create a .desktop launcher file'
+        '--install:Add launcher to application menu'
         '--generate-completions:Generate shell completion scripts'
         '-h:Show help message (short form)'
         '-V:Show version information (short form)'
@@ -586,7 +650,7 @@ _kitty_launcher() {
             _describe -t commands 'kitty-launcher commands' commands
             _describe -t sessions 'available sessions' sessions
             ;;
-        second_arg)
+         second_arg)
             case ${words[2]} in
                 --create|-c)
                     # No completion for new session names
@@ -594,6 +658,9 @@ _kitty_launcher() {
                 --create-launcher|-l)
                     # Complete with available sessions or launcher name
                     _describe -t sessions 'session name' sessions
+                    ;;
+                --install)
+                    # No completion for launcher names to install
                     ;;
                 --generate-completions)
                     _values 'shell' 'bash' 'zsh'
@@ -693,7 +760,40 @@ fn main() {
                 println!("Path: {}", path.display());
                 println!("Launcher name: {}", launcher_name);
                 println!("Session: {}", session_name);
-                println!("The launcher has been registered in your application menu.");
+                println!();
+                println!("To add this launcher to your application menu, run:");
+                println!("  kitty-launcher --install {}", launcher_name);
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(2);
+            }
+        }
+    }
+
+    // Handle --install command (add launcher to application menu)
+    if first_arg == "--install" {
+        if args.len() != 3 {
+            eprintln!("Error: --install requires exactly one argument");
+            eprintln!("Usage: {} --install <LAUNCHER_NAME>", args[0]);
+            eprintln!();
+            eprintln!("This creates a symlink in ~/.local/share/applications/");
+            eprintln!("to expose the launcher to your application menu.");
+            exit(2);
+        }
+
+        let launcher_name = &args[2];
+
+        match install_launcher_symlink(launcher_name) {
+            Ok(symlink_path) => {
+                println!("Launcher installed successfully!");
+                println!("Symlink: {}", symlink_path.display());
+                println!();
+                println!(
+                    "The launcher '{}' is now available in your application menu.",
+                    launcher_name
+                );
                 println!(
                     "You may need to refresh your desktop environment for changes to take effect."
                 );

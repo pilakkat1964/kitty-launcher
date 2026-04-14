@@ -61,20 +61,28 @@ file can then be edited to customize the session configuration.
 
 .TP
 .B \-l, \-\-create-launcher <LAUNCHER_NAME> [SESSION_NAME]
-Create a .desktop launcher file for launching a session from application menus.
+Create a .desktop launcher file for launching a session.
 The program will:
 .RS
 .IP 1. 3
-Create the ~/.local/share/applications/ directory if it doesn't exist
+Create the ~/.local/etc/kitty/launchers/ directory if it doesn't exist
 .IP 2. 3
 Generate a standard .desktop file named kitty-launcher-<LAUNCHER_NAME>.desktop
 .IP 3. 3
-Save the .desktop file in the applications directory
+Save the .desktop file in the launchers directory
 .RE
 
-The created .desktop file can be used by desktop environments to add the launcher
-to application menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the
-session. You may need to refresh your desktop environment for changes to take effect.
+The created .desktop file is stored locally for organization. If SESSION_NAME is
+omitted, LAUNCHER_NAME is used as the session. To expose a launcher to the
+application menu, use the --install command.
+
+.TP
+.B \-\-install <LAUNCHER_NAME>
+Add a launcher to the application menu by creating a symlink to
+~/.local/share/applications/. This enables the launcher to appear in your
+desktop environment's application menu without cluttering the launchers
+directory. You may need to refresh your desktop environment for changes to
+take effect.
 
 .SH SESSION SEARCH BEHAVIOR
 The program implements smart session file discovery with the following features:

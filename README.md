@@ -249,13 +249,19 @@ kitty-launcher -l "Backend" backend
 kitty-launcher -l "Tools" tools
 ```
 
-Launchers are created in: `~/.local/share/applications/kitty-launcher-*.desktop`
+Launchers are created in: `~/.local/etc/kitty/launchers/kitty-launcher-*.desktop`
+
+To expose launchers to your application menu, use:
+```bash
+kitty-launcher --install <LAUNCHER_NAME>
+```
+This creates a symlink in `~/.local/share/applications/` for system integration.
 
 #### Step 3: Create Folder View on Desktop
 
 1. Right-click on desktop → **Configure Desktop**
 2. Click **Add Widget** → **Folder View**
-3. Set the folder to: `~/.local/share/applications`
+3. Set the folder to: `~/.local/etc/kitty/launchers`
 4. Position and resize to preference
 
 #### Step 4: Access Your Terminals
@@ -274,10 +280,10 @@ Launchers are created in: `~/.local/share/applications/kitty-launcher-*.desktop`
 For better organization with cascading menus:
 
 ```bash
-# Create by category
-mkdir -p ~/.local/share/applications/Development
-mkdir -p ~/.local/share/applications/DevOps
-mkdir -p ~/.local/share/applications/Data-Science
+# Create categorical folders in your launchers directory
+mkdir -p ~/.local/etc/kitty/launchers/Development
+mkdir -p ~/.local/etc/kitty/launchers/DevOps
+mkdir -p ~/.local/etc/kitty/launchers/Data-Science
 
 # Create categorized launchers
 kitty-launcher -l "Development/Python" python-dev
