@@ -65,13 +65,9 @@ Commands
 
  -l, --create-launcher <LAUNCHER_NAME> [SESSION_NAME]
      Create a .desktop launcher file for launching a session from application
-     menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.
-     Creates a file named kitty-launcher-<LAUNCHER_NAME>.desktop in
-     ~/.local/share/applications/.
-
- -i, --install-launcher
-     Install the main kitty-launcher application as a system launcher by
-     creating a .desktop file in ~/.local/share/applications/.
+      menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the session.
+      Creates a file named kitty-launcher-<LAUNCHER_NAME>.desktop in
+      ~/.local/share/applications/.
 
 
 File: kitty-launcher.info, Node: Session Names, Next: File Discovery, Prev: Usage, Up: Top
@@ -239,14 +235,6 @@ To create a launcher named "dev-env" for the "dev" session:
 This creates: ~/.local/share/applications/kitty-launcher-dev-env.desktop
 
 
-Installing the System Launcher
-===============================
-
-To register the main kitty-launcher application itself:
-
-   kitty-launcher --install-launcher
-
-This creates: ~/.local/share/applications/kitty-launcher.desktop
 
 
 Desktop Environment Refresh
@@ -331,16 +319,6 @@ You can now launch this session from your desktop application menu.
 
 Install System Launcher
 =======================
-
-Short form:
-   kitty-launcher -i
-
-Long form:
-   kitty-launcher --install-launcher
-
-Registers the main kitty-launcher application in your desktop menu:
-   ~/.local/share/applications/kitty-launcher.desktop
-
 
 Display Help
 ============

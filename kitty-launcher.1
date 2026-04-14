@@ -76,13 +76,6 @@ The created .desktop file can be used by desktop environments to add the launche
 to application menus. If SESSION_NAME is omitted, LAUNCHER_NAME is used as the
 session. You may need to refresh your desktop environment for changes to take effect.
 
-.TP
-.B \-i, \-\-install-launcher
-Install the main kitty-launcher application as a system launcher by creating a
-.desktop file in ~/.local/share/applications/. This registers kitty-launcher in
-the desktop application menu for quick access. You may need to refresh your desktop
-environment for changes to take effect.
-
 .SH SESSION SEARCH BEHAVIOR
 The program implements smart session file discovery with the following features:
 
@@ -209,13 +202,6 @@ Create a launcher for the dev session (long form):
 .B kitty-launcher --create-launcher dev dev
 
 .TP
-Install the main application launcher (short form):
-.B kitty-launcher -i
-
-.TP
-Install the main application launcher (long form):
-.B kitty-launcher --install-launcher
-
 .TP
 Display help message (short form):
 .B kitty-launcher -h

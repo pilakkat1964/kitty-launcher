@@ -47,7 +47,7 @@ kitty-launcher dev
 
 ### ⚡ Multi-Session Management
 - **Instant switching**: Launch any terminal configuration with one command
-- **Quick aliases**: Use short flags (`-c`, `-l`, `-i`) for faster operation
+- **Quick aliases**: Use short flags (`-c`, `-l`) for faster operation
 - **Session templates**: Create new sessions from existing templates
 - **Zero startup overhead**: Minimal latency compared to manual configuration
 
@@ -418,9 +418,6 @@ kitty-launcher -c my-project
 # Create a desktop launcher
 kitty-launcher -l "My Project" my-project
 
-# Install system launcher
-kitty-launcher -i
-
 # Display help
 kitty-launcher -h
 
@@ -608,7 +605,7 @@ A: Session management, desktop integration, and configuration management are rea
 | Quick session switching | ✅ Single command | ❌ 5+ manual steps | ⚠️ Complex config |
 | Desktop integration | ✅ Built-in | ❌ Not available | ⚠️ Plugin-dependent |
 | KDE Plasma folder view | ✅ Native | ❌ No | ⚠️ Limited support |
-| Short flags for speed | ✅ Yes (-c, -l, -i) | N/A | ⚠️ Long options |
+| Short flags for speed | ✅ Yes (-c, -l) | N/A | ⚠️ Long options |
 | Session templates | ✅ Included | ❌ Manual | ⚠️ Complex setup |
 | Written in Rust | ✅ Fast & safe | N/A | ⚠️ Other languages |
 | Searchable in docs | ✅ Excellent | N/A | ⚠️ Poor discoverability |

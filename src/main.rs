@@ -59,7 +59,6 @@ fn print_help() {
         "    -c, --create <NAME>                         Create a new session configuration file"
     );
     println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
-    println!("    -i, --install-launcher                      Install system launcher to ~/.local/share/applications");
     println!("    --generate-completions <SHELL>              Generate shell completion scripts (bash|zsh)");
     println!("    -h, --help                                  Show this help message");
     println!("    -V, --version                               Show version information");
@@ -79,15 +78,12 @@ fn print_help() {
     println!(
         "    kitty-launcher --create-launcher dev        Create launcher (uses dev as session)"
     );
-    println!("    kitty-launcher -i                           Register launcher in app menu");
-    println!("    kitty-launcher --install-launcher           Register launcher (long form)");
     println!("    kitty-launcher --generate-completions bash  Output bash completion script");
     println!("    kitty-launcher --generate-completions zsh   Output zsh completion script");
     println!();
     println!("SHORT FLAGS:");
     println!("    -c, --create                Alias for session file creation");
     println!("    -l, --create-launcher       Alias for launcher file creation");
-    println!("    -i, --install-launcher      Alias for system launcher installation");
     println!("    -h, --help                  Display help (same as --help)");
     println!("    -V, --version               Display version (same as --version)");
     println!();
@@ -117,7 +113,6 @@ fn print_help() {
     println!("    - Desktop files allow launching sessions from application menus");
     println!("    - Use -l <LAUNCHER_NAME> [SESSION] to create a launcher");
     println!("    - If SESSION is omitted, uses LAUNCHER_NAME as the session");
-    println!("    - Use -i to register the main application");
     println!();
     println!("For more information, visit: https://github.com/pilakkat1964/kitty-launcher");
 }
@@ -441,58 +436,6 @@ MimeType=application/x-shellscript;text/x-shellscript;application/x-sh;text/x-sh
     Ok(desktop_file_path)
 }
 
-/// Creates a default launcher for ~/.local/share/applications directory
-/// that installs the main kitty-launcher binary as a desktop application.
-///
-/// This creates a .desktop file that registers kitty-launcher in the system
-/// application menu, allowing it to be discovered by desktop environments.
-fn create_system_launcher() -> Result<PathBuf, String> {
-    // Get home directory
-    let home = get_home_dir().ok_or_else(|| "Could not determine home directory".to_string())?;
-
-    // Define the applications directory
-    let apps_dir = home.join(".local/share/applications");
-
-    // Create the directory if it doesn't exist
-    fs::create_dir_all(&apps_dir)
-        .map_err(|e| format!("Failed to create directory {}: {}", apps_dir.display(), e))?;
-
-    // Define the .desktop file path
-    let desktop_file_path = apps_dir.join("kitty-launcher.desktop");
-
-    // Check if the file already exists
-    if desktop_file_path.exists() {
-        return Err(format!(
-            "System launcher already exists: {}",
-            desktop_file_path.display()
-        ));
-    }
-
-    // Generate the .desktop file content for the main application
-    let desktop_content = r#"[Desktop Entry]
-Type=Application
-Version=1.0
-Name=Kitty Launcher
-Comment=Terminal session launcher for kitty emulator
-Exec=kitty-launcher
-Icon=kitty
-Terminal=false
-Categories=System;TerminalEmulator;Utility;
-StartupNotify=true
-"#;
-
-    // Write the .desktop file
-    fs::write(&desktop_file_path, desktop_content).map_err(|e| {
-        format!(
-            "Failed to create system launcher file {}: {}",
-            desktop_file_path.display(),
-            e
-        )
-    })?;
-
-    Ok(desktop_file_path)
-}
-
 /// Loads and validates the launcher configuration from command line arguments.
 ///
 /// This function:
@@ -590,7 +533,7 @@ _kitty_launcher_complete() {
     # Handle options and commands
     if [[ $COMP_CWORD -eq 1 ]]; then
         # First argument: commands and sessions
-        local commands="--help --version --create --create-launcher --install-launcher --generate-completions -h -V -c -l -i"
+        local commands="--help --version --create --create-launcher --generate-completions -h -V -c -l"
         COMPREPLY=( $(compgen -W "${commands} ${sessions}" -- "$cur") )
     elif [[ "$prev" == "--create" ]] || [[ "$prev" == "-c" ]]; then
         # After --create or -c: no completion (user enters new session name)
@@ -628,13 +571,11 @@ _kitty_launcher() {
         '--version:Show version information'
         '--create:Create a new session configuration file'
         '--create-launcher:Create a .desktop launcher file'
-        '--install-launcher:Install system launcher'
         '--generate-completions:Generate shell completion scripts'
         '-h:Show help message (short form)'
         '-V:Show version information (short form)'
         '-c:Create session (short form)'
         '-l:Create launcher (short form)'
-        '-i:Install launcher (short form)'
     )
     
     _arguments \
@@ -755,25 +696,6 @@ fn main() {
                 println!("Launcher name: {}", launcher_name);
                 println!("Session: {}", session_name);
                 println!("The launcher has been registered in your application menu.");
-                println!(
-                    "You may need to refresh your desktop environment for changes to take effect."
-                );
-                exit(0);
-            }
-            Err(e) => {
-                eprintln!("Error: {}", e);
-                exit(2);
-            }
-        }
-    }
-
-    // Handle install-launcher command (both --install-launcher and -i)
-    if first_arg == "--install-launcher" || first_arg == "-i" {
-        match create_system_launcher() {
-            Ok(path) => {
-                println!("System launcher installed successfully!");
-                println!("Path: {}", path.display());
-                println!("Kitty Launcher is now available in your application menu.");
                 println!(
                     "You may need to refresh your desktop environment for changes to take effect."
                 );
