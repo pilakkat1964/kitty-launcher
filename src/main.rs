@@ -30,7 +30,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
-const VERSION: &str = "0.5.1";
+// Version is automatically synced from Cargo.toml
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Represents the configuration for the kitty launcher application.
 ///

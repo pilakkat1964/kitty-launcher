@@ -5,8 +5,11 @@ edition = "2021"
 authors = ["OpenCode Contributors"]
 description = "A robust Rust wrapper for kitty terminal emulator with flexible session presets"
 license = "MIT"
-documentation = "https://github.com/pilakkat1964/kitty-launcher"
-repository = "https://github.com/pilakkat1964/kitty-launcher"
+documentation = "https://docs.rs/kitty-launcher"
+repository = "https://github.com/pilakkat1964/z-kitty-launcher"
+homepage = "https://github.com/pilakkat1964/z-kitty-launcher"
 readme = "README.md"
+keywords = ["terminal", "kitty", "session-manager", "launcher", "tui"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
