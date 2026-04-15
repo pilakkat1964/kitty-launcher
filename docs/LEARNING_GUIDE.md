@@ -1,3 +1,8 @@
+---
+layout: default
+title: Learning Guide
+---
+
 # Kitty Launcher - Deep Dive Learning Guide
 
 This guide provides a thorough walkthrough of the code for Rust learners.

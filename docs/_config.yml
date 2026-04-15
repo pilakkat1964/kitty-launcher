@@ -1,0 +1,63 @@
+# GitHub Pages Jekyll Configuration for kitty-launcher
+# Theme: jekyll-theme-slate
+
+# Base URL for GitHub Pages deployment
+baseurl: /kitty-launcher
+
+# Theme
+theme: jekyll-theme-slate
+
+# Site Information
+title: Kitty Launcher
+description: "Terminal session manager for Kitty emulator — launch and manage terminal sessions from system tray"
+show_downloads: true
+
+# GitHub Repository Information
+github:
+  repository_url: https://github.com/pilakkat1964/kitty-launcher
+  owner_name: pilakkat1964
+  owner_url: https://github.com/pilakkat1964
+
+# Plugins for GitHub Pages
+plugins:
+  - jekyll-feed
+  - jekyll-relative-links
+
+# Markdown processor
+markdown: kramdown
+
+# Kramdown configuration
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Permalink style
+permalink: /:title/
+
+# Front matter defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# Relative links plugin configuration
+relative_links:
+  collections: true
+
+# Build settings
+keep_files:
+  - .git
+  - .github
+
+# Exclude unnecessary files
+exclude:
+  - Makefile
+  - .gitignore
+  - .github
+  - README.md
+  - Cargo.toml
+  - Cargo.lock
+  - src
+  - target
+  - scripts

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Installation Guide
+---
+
 # Installation Guide for Kitty Launcher
 
 This guide covers installing kitty-launcher from pre-built packages, source, or as a Debian package.

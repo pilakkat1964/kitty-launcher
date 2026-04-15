@@ -1,3 +1,8 @@
+---
+layout: default
+title: Quick Reference
+---
+
 # Kitty Launcher - Quick Reference
 
 ## Getting Started (30 seconds)

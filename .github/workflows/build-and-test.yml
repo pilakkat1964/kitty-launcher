@@ -62,3 +62,16 @@ jobs:
         echo "Binary size: $(du -h target/release/kitty-launcher | cut -f1)"
         echo "Build details:"
         ./target/release/kitty-launcher --help 2>&1 || echo "Help not implemented (expected)"
+
+  security_audit:
+    name: Security Audit (cargo-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: cargo audit --deny warnings

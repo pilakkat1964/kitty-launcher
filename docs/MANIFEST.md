@@ -1,3 +1,8 @@
+---
+layout: default
+title: Project Manifest
+---
+
 # Kitty Launcher - Project Manifest
 
 **Project Name**: Kitty Launcher  

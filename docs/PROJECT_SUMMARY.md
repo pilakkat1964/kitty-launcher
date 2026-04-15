@@ -1,3 +1,8 @@
+---
+layout: default
+title: Project Summary
+---
+
 # Kitty Launcher - Project Summary
 
 ## Project Completion Status ✅

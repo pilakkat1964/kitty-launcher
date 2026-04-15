@@ -133,6 +133,18 @@ kitty-launcher --version
 
 ---
 
+## 🔗 Related Z-Tools Projects
+
+**Explore other tools in the z-tools ecosystem:**
+
+- **[Z-Edit](http://pilakkat.mywire.org/z-edit/)** — Opens files with the right editor
+- **[Z-Open](http://pilakkat.mywire.org/z-open/)** — Opens files/URLs with the right application
+- **[RClone Mount Applete](https://pilakkat1964.github.io/z-rclone-mount-applete/)** — System tray manager for cloud storage
+
+**[→ View Master Index](https://pilakkat1964.github.io/master-index/)** — Complete guide to all z-tools projects
+
+---
+
 ## Build Information
 
 This project is built with:
@@ -145,4 +157,4 @@ Learn more about the Rust implementation in the [Learning Guide](./LEARNING_GUID
 
 ---
 
-*Last Updated: April 15, 2026*
+*Last Updated: April 16, 2026*
