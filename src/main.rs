@@ -61,6 +61,9 @@ fn print_help() {
     println!();
     println!("COMMANDS:");
     println!("    <SESSION_NAME>                              Launch a kitty session");
+    println!(
+        "    <SESSION_NAME> -- [KITTY_ARGS]              Launch session and pass args to kitty"
+    );
     println!("    -c, --create <NAME>                         Create a session template file");
     println!("    -l, --create-launcher <NAME> [SESSION]      Create a .desktop launcher file");
     println!("    --path <DIR>                                (with -l) Set working directory for launcher");
@@ -82,6 +85,9 @@ fn print_help() {
     println!();
     println!("    # Launch the session");
     println!("    kitty-launcher my-session");
+    println!();
+    println!("    # Launch session with custom kitty arguments");
+    println!("    kitty-launcher my-session -- --start-as=fullscreen");
     println!();
     println!("    # Create a launcher file for GUI access");
     println!("    kitty-launcher -l 'My Session' my-session");
@@ -119,6 +125,15 @@ fn print_help() {
     println!("    To expose a launcher to the application menu, use:");
     println!("    kitty-launcher --install <LAUNCHER_NAME>");
     println!("    This creates a symlink in ~/.local/share/applications/.");
+    println!();
+    println!("PASSING ARGUMENTS TO KITTY:");
+    println!("    Use the '--' separator to pass arguments directly to kitty:");
+    println!("    kitty-launcher <SESSION> -- <KITTY_ARGS>");
+    println!();
+    println!("    Examples:");
+    println!("    kitty-launcher dev -- --start-as=fullscreen");
+    println!("    kitty-launcher work -- --title='Work Terminal'");
+    println!("    kitty-launcher main -- -o font_size=14");
     println!();
     println!("SHELL COMPLETIONS:");
     println!("    bash:  kitty-launcher --generate-completions bash >> ~/.bashrc");
@@ -577,11 +592,12 @@ fn load_config(session_name: &str) -> Result<LauncherConfig, String> {
 ///
 /// # Arguments
 /// * `config` - The launcher configuration containing the session name and config file path
+/// * `extra_args` - Optional additional arguments to pass to kitty
 ///
 /// # Returns
 /// * `Ok(())` - If kitty was launched successfully
 /// * `Err(String)` - If there was an error launching kitty
-fn launch_kitty(config: &LauncherConfig) -> Result<(), String> {
+fn launch_kitty(config: &LauncherConfig, extra_args: Option<Vec<String>>) -> Result<(), String> {
     // Extract the directory containing the configuration file
     let config_dir = config
         .config_path
@@ -603,6 +619,13 @@ fn launch_kitty(config: &LauncherConfig) -> Result<(), String> {
     // Add the session argument
     command.arg("--session");
     command.arg(&config.config_path);
+
+    // Add any extra arguments passed by the user
+    if let Some(args) = extra_args {
+        for arg in args {
+            command.arg(arg);
+        }
+    }
 
     // Attempt to execute kitty
     match command.spawn() {
@@ -736,10 +759,21 @@ fn main() {
     // Collect command line arguments
     let args: Vec<String> = env::args().collect();
 
-    // Check for help request or no arguments
+    // If no arguments provided, launch kitty with no session (default behavior)
     if args.len() == 1 {
-        print_help();
-        exit(0);
+        match Command::new("kitty").spawn() {
+            Ok(_) => {
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!(
+                    "Error: Failed to launch kitty: {}\n\n\
+                    Please ensure kitty is installed and available in your PATH.",
+                    e
+                );
+                exit(1);
+            }
+        }
     }
 
     let first_arg = &args[1];
@@ -917,19 +951,40 @@ fn main() {
     }
 
     // If we get here, treat as session launch
-    if args.len() != 2 {
-        eprintln!("Error: Expected exactly one session name argument");
+    // Check for at least the session name
+    if args.len() < 2 {
+        eprintln!("Error: Expected at least one session name argument");
         eprintln!("Use '{}' --help for usage information", args[0]);
         exit(2);
     }
 
     let session_name = &args[1];
 
+    // Look for the "--" separator to split session args from kitty args
+    let mut extra_args: Option<Vec<String>> = None;
+    if args.len() > 2 {
+        // Check if there's a "--" separator
+        if let Some(sep_index) = args.iter().position(|arg| arg == "--") {
+            // Everything after "--" goes to kitty
+            if sep_index + 1 < args.len() {
+                extra_args = Some(args[sep_index + 1..].to_vec());
+            }
+        } else {
+            // No separator found, but multiple args - this is an error
+            eprintln!("Error: Unexpected arguments");
+            eprintln!("Usage: {} <SESSION_NAME> [-- <KITTY_ARGS>...]", args[0]);
+            eprintln!();
+            eprintln!("To pass arguments to kitty, use '--' as a separator:");
+            eprintln!("  {} my-session -- --start-as=fullscreen", args[0]);
+            exit(2);
+        }
+    }
+
     // Load configuration and validate inputs
     match load_config(session_name) {
         Ok(config) => {
             // Try to launch kitty
-            match launch_kitty(&config) {
+            match launch_kitty(&config, extra_args) {
                 Ok(()) => {
                     // Kitty launched successfully
                     exit(0);
