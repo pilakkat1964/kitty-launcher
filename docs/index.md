@@ -139,9 +139,9 @@ kitty-launcher --version
 
 - **[Z-Edit](http://pilakkat.mywire.org/z-edit/)** — Opens files with the right editor
 - **[Z-Open](http://pilakkat.mywire.org/z-open/)** — Opens files/URLs with the right application
-- **[RClone Mount Applete](https://pilakkat1964.github.io/z-rclone-mount-applete/)** — System tray manager for cloud storage
+- **[RClone Mount Applete](https://pilakkat.mywire.org/z-rclone-mount-applete/)** — System tray manager for cloud storage
 
-**[→ View Master Index](https://pilakkat1964.github.io/master-index/)** — Complete guide to all z-tools projects
+**[→ View Master Index](http://pilakkat.mywire.org/master-index/)** — Complete guide to all z-tools projects
 
 ---
 
