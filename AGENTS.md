@@ -481,19 +481,64 @@ curl -I http://pilakkat.mywire.org/z-kitty-launcher/
 
 ---
 
+## Recent Session Updates (Priority 5: Crates.io Publishing)
+
+### ✅ Completed: Crates.io Publishing Setup (April 16, 2026)
+
+**Changes Applied:**
+
+1. **Cargo.toml Metadata Standardization**
+   - Fixed version duplication: Changed hardcoded `const VERSION: "0.5.1"` to use `env!("CARGO_PKG_VERSION")` macro
+   - Updated documentation URL: `https://github.com/kitty-launcher` → `https://docs.rs/kitty-launcher` for automated Rust documentation
+   - Added homepage field: `https://github.com/pilakkat1964/z-kitty-launcher`
+   - Added keywords: `["terminal", "kitty", "session-manager", "launcher", "tui"]` (5 keywords for discoverability)
+   - Added categories: `["command-line-utilities", "development-tools"]` (2 categories for proper classification)
+
+2. **Crates.io Publishing Workflow**
+   - Created `.github/workflows/publish-crates.yml` (45 lines)
+   - Automatically triggered on git tags matching `v*` pattern (e.g., `v0.5.1`)
+   - Uses `dtolnay/rust-toolchain@stable` for reliable Rust setup
+   - Runs `cargo package --allow-dirty` for pre-flight verification
+   - Uses `cargo publish` with token authentication
+   - Includes 15-second delay for Crates.io indexing
+   - Verifies publication with confirmation output
+
+3. **Security & Configuration**
+   - Requires `CARGO_REGISTRY_TOKEN` GitHub secret (user must configure)
+   - Minimal permissions (contents: read only)
+   - Uses continue-on-error for graceful handling of duplicate publishes
+
+**Files Modified:**
+- `Cargo.toml` - Metadata additions (keywords, categories, homepage, docs.rs URL)
+- `src/main.rs` - Version duplication fix (line 33: use env! macro)
+- `.github/workflows/publish-crates.yml` (NEW)
+
+**Commits Created:**
+- `ae1aab2`: "feat: add Crates.io publishing workflow and standardize metadata"
+
+**Impact:**
+- kitty-launcher can now be published to Crates.io automatically on release
+- Eliminated version duplication (single source of truth from Cargo.toml)
+- Automatic Rust documentation generation on docs.rs
+- Professional package metadata with correct classification
+- Users can install via: `cargo install kitty-launcher` (once published)
+
+**Next Steps for Crates.io Deployment:**
+1. Generate Crates.io API token at https://crates.io/me
+2. Add token as `CARGO_REGISTRY_TOKEN` repository secret in GitHub
+3. Tag and push release: `git tag v0.5.1 && git push origin v0.5.1`
+4. Workflow runs automatically and publishes to Crates.io
+5. Verify package appears at https://crates.io/crates/kitty-launcher/
+
+---
+
 ## Future Development Priorities
 
-### Priority 4: PyPI Publishing (Python Projects)
-- Publish z-edit to PyPI package index
-- Publish z-open to PyPI package index
-- Create PyPI-specific documentation
-- Set up automated PyPI releases in GitHub Actions
-
-### Priority 5: Crates.io Publishing (Rust Projects)
-- Publish z-kitty-launcher to Crates.io registry
-- Publish z-rclone-mount-applete to Crates.io registry
-- Create Crates.io documentation
-- Set up automated Crates.io releases in GitHub Actions
+### Priority 6: Enhanced Contribution Guidelines
+- Create CONTRIBUTING.md for all projects
+- Standardize code review process
+- Document development workflow
+- Create contributor's guide
 
 ### Priority 6: Enhanced Contribution Guidelines
 - Create CONTRIBUTING.md for all projects
@@ -526,6 +571,6 @@ curl -I http://pilakkat.mywire.org/z-kitty-launcher/
 
 ---
 
-**Status Summary**: ✅ Production-ready. GitHub Pages deployed and live. Multi-architecture CI/CD operational. Cargo-audit security scanning enabled. Cross-project navigation working. SSH+Git fully operational. Ready for PyPI/Crates.io publishing phase.
+**Status Summary**: ✅ Production-ready. GitHub Pages deployed and live. Multi-architecture CI/CD operational. Cargo-audit security scanning enabled. Crates.io publishing configured. Cross-project navigation working. SSH+Git fully operational. Ready for contribution guidelines phase.
 
-**Last Updated**: April 16, 2026 (GitHub Pages deployment completed)
+**Last Updated**: April 16, 2026 (Priority 5: Crates.io publishing workflow added)
