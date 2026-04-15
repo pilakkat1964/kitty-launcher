@@ -654,6 +654,14 @@ A: Session management, desktop integration, and configuration management are rea
 
 ## Contributing & Feedback
 
+Want to contribute to z-kitty-launcher? We'd love your help! Check out [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- How to report bugs and suggest features
+- Development environment setup with Rust and Cargo
+- Code style guidelines (fmt, clippy, doc comments)
+- Testing requirements and best practices
+- Pull request process and code review expectations
+- Understanding the codebase architecture
+
 This is both a learning project and a practical tool. Contributions welcome!
 
 - **Issues**: Report bugs or request features
