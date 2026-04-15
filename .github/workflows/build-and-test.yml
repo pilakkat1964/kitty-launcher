@@ -51,7 +51,7 @@ jobs:
       run: ./scripts/build.sh --release --test
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kitty-launcher-release
         path: target/release/kitty-launcher
