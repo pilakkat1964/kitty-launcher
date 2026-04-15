@@ -1,3 +1,15 @@
+kitty-launcher (0.5.1-1) unstable; urgency=medium
+
+  * Add intelligent version detection to build scripts
+  * Add --tip flag to build latest Cargo.toml version
+  * Add --git-version TAG flag for building specific git tags
+  * Add --version VERSION flag for forced version override
+  * Enhance build-deb.sh with automatic debian/changelog synchronization
+  * Improve version mismatch detection and warnings
+  * 100% backward compatible with existing CI/CD workflows
+
+ -- OpenCode Contributors <contributors@opencode.ai>  Wed, 15 Apr 2026 00:00:00 +0000
+
 kitty-launcher (0.4.0-1) unstable; urgency=medium
 
   * Add shell completion generation with --generate-completions command
