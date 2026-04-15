@@ -1,4 +1,5 @@
 theme: jekyll-theme-slate
+source: docs
 
 title: Z-Kitty Launcher
 description: "Terminal Session Manager for the Kitty Emulator - Intelligent Build Scripts & Desktop Integration"
