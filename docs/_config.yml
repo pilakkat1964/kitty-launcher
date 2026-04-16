@@ -2,7 +2,7 @@
 # Theme: jekyll-theme-slate
 
 # Base URL for GitHub Pages deployment
-baseurl: /kitty-launcher
+baseurl: /z-kitty-launcher
 
 # Theme
 theme: jekyll-theme-slate
@@ -14,7 +14,7 @@ show_downloads: true
 
 # GitHub Repository Information
 github:
-  repository_url: https://github.com/pilakkat1964/kitty-launcher
+  repository_url: https://github.com/pilakkat1964/z-kitty-launcher
   owner_name: pilakkat1964
   owner_url: https://github.com/pilakkat1964
 
