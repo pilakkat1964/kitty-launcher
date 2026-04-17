@@ -1,63 +1,41 @@
-# GitHub Pages Jekyll Configuration for kitty-launcher
-# Theme: jekyll-theme-slate
-
-# Base URL for GitHub Pages deployment
 baseurl: /z-kitty-launcher
-
-# Theme
 theme: jekyll-theme-architect
-
-# Site Information
 title: Kitty Launcher
-description: "Terminal session manager for Kitty emulator — launch and manage terminal sessions from system tray"
+description: "Terminal session manager for Kitty emulator \u2014 launch and manage\
+  \ terminal sessions from system tray"
 show_downloads: true
-
-# GitHub Repository Information
 github:
   repository_url: https://github.com/pilakkat1964/z-kitty-launcher
   owner_name: pilakkat1964
   owner_url: https://github.com/pilakkat1964
-
-# Plugins for GitHub Pages
 plugins:
-  - jekyll-feed
-  - jekyll-relative-links
-
-# Markdown processor
+- jekyll-feed
+- jekyll-relative-links
 markdown: kramdown
-
-# Kramdown configuration
 kramdown:
   input: GFM
   syntax_highlighter: rouge
-
-# Permalink style
 permalink: /:title/
-
-# Front matter defaults
 defaults:
-  - scope:
-      path: ""
-    values:
-      layout: default
-
-# Relative links plugin configuration
+- scope:
+    path: ''
+  values:
+    layout: default
 relative_links:
   collections: true
-
-# Build settings
 keep_files:
-  - .git
-  - .github
-
-# Exclude unnecessary files
+- .git
+- .github
 exclude:
-  - Makefile
-  - .gitignore
-  - .github
-  - README.md
-  - Cargo.toml
-  - Cargo.lock
-  - src
-  - target
-  - scripts
+- Makefile
+- .gitignore
+- .github
+- README.md
+- Cargo.toml
+- Cargo.lock
+- src
+- target
+- scripts
+parent_url: /z-tools
+hierarchy_level: 2
+hierarchy_parent_title: Z-Tools Portfolio
