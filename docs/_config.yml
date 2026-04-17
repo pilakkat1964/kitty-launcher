@@ -37,3 +37,7 @@ exclude:
 - target
 - scripts
 parent_url: /z-tools
+
+# Site Hierarchy Navigation
+hierarchy_level: 2
+hierarchy_parent_title: "Z-Tools Portfolio"
